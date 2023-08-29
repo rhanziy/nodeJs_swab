@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Slackside+One&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;500;700&display=swap');
+
+
+body {
+  font-family: 'Noto Sans KR', sans-serif !important;
+}
+
+footer {
+  font-weight:300 !important;
+}
+
+
+
+.logo{
+  font-family: 'Slackside One', cursive !important;
+}
+
+img {
+  width:100%;
+  height:auto;
+}
+
+.container {
+  max-width: 960px;
+}
+
+.script-header {
+  margin:30px 0;
+  padding:120px 0 100px;
+  background: #333 url("main2.png") repeat;
+  background-attachment: fixed;
+  background-position: top left;
+}
+
+.script-header > h1 {
+  font-stretch: ultra-condensed;
+}
+.script-header > p {
+  font-size: 17px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 300;
+}
+
+
