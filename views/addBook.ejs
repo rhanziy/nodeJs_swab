@@ -13,13 +13,17 @@
 
     
     <main>
-      <h4 class="mt-5 "><strong>책 등록하기</strong></h4>
+      <h4 class="mt-5 text-center"><strong>책 등록하기</strong></h4>
 
-      <div class="my-4">
-        <form action="/add" method="POST">
+      <div class="d-flex my-4 mx-auto justify-content-center" style="max-width:700px;">
+        <form action="/upload" method="POST" enctype="multipart/form-data" style="width:90%;">
+          <div class="mt-2">
+            <label>책 이미지</label>
+            <input type="file" name="file" class="form-control mt-1" multiple>
+          </div>
           <div class="mt-2">
             <label>제목</label>
-            <input type="text" name="title" class="form-control mt-1">
+            <input type="text" name="bookTitle" class="form-control mt-1">
           </div>
           <div class="mt-2">
             <label>작가</label>
@@ -27,39 +31,19 @@
           </div>
           <div class="mt-2">
             <label>카테고리</label>
-            <select class="form-select mt-1" aria-label="Default select example">
+            <select name="cate" class="form-select mt-1" aria-label="Default select example">
               <option selected>선택</option>
               <option value="01">국내도서</option>
               <option value="02">외국도서</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-outline-secondary mt-3">Submit</button>
+          <button type="submit" class="btn btn-outline-secondary mt-3">등록</button>
         </form>
       </div>    
         
     </main>
     
-    <footer class="pt-4 my-md-5 pt-md-5 border-top">
-        <div class="row">
-        <div class="col-12 col-md">
-            <small class="d-block mb-3 text-muted">&copy; 2023 dev rahnziy</small>
-        </div>
-        <div class="col-6 col-md">
-            <h5>Features</h5>
-            <ul class="list-unstyled text-small">
-            <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Cool stuff</a></li>
-            <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Random feature</a></li>
-            </ul>
-        </div>
-        <div class="col-6 col-md">
-            <h5>Resources</h5>
-            <ul class="list-unstyled text-small">
-            <li class="mb-1"><a class="link-secondary text-decoration-none" href="/write">Q&A</a></li>
-            <li class="mb-1"><a class="link-secondary text-decoration-none" href="#">Resource name</a></li>
-            </ul>
-        </div>
-        </div>
-    </footer>
+    <%- include('footer.html')%>
     </div>
 
     

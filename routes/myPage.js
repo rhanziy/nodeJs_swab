@@ -10,14 +10,20 @@ function isLogin(req, res, next){
 
 router.use( isLogin );
 
-router.get('/community', (req, res)=>{
-    res.send('커뮤니티게시판');
+router.get('/myPost', (req, res)=>{
+    // res.render('./myPage/myPost.ejs');
 })
 
+router.get('/myChat', (req,res)=>{
+
+    res.app.db.collection('chatRoom').find({ "member.1" : { $eq : req.user.id } }).toArray((err, result)=>{
+            res.render('./myPage/myChat.ejs', { chatInfo : result, user : req.user._id });
+    })  
+})
 
 router.get('/myQnA', (req, res)=>{
     res.app.db.collection('qna').find().toArray((err, result)=>{
-        res.render('myQnA.ejs', { qnas : result, user : req.user._id });
+        res.render('./myPage/myQnA.ejs', { qnas : result, user : req.user._id });
     })
 })
 

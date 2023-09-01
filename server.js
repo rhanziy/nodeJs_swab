@@ -1,28 +1,131 @@
+// 작업폴더 오픈 후 npm init. entry point ? server.js
+// 서버 자동 실행 npm install -g nodemon, => nodemon server.js
+
+// npm install express
 const express = require('express');
 const app = express();
-const bodyParser = require('body-parser');
+
+// npm install mongodb@3.6.4
 const MongoClient = require('mongodb').MongoClient;
+
+// npm install dotenv로 환경변수 사용
+// .env파일 생성가능 / process.env.변수명으로 사용
 require('dotenv').config();
 
 
+// npm install ejs
+// ejs파일에 서버데이터 박아넣기
+app.set('view engine', 'ejs');
+
+//form 데이터를 body로 받아오는 body-parser
+app.use(express.urlencoded({extended : true}));
+
+
+// public을 절대경로로 지정
+app.use(express.static("public"));
+
+
+// npm install method-override
 // form method PUT, app.put 가능하게해주는 라이브러리
 const methodOverride = require('method-override');
-
-// 회원인증 passport
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const session = require('express-session');
-// const MongoStore = require('connect-mongo');
-
-
-
-app.set('view engine', 'ejs');
-app.use(bodyParser.urlencoded({extended : true}));
-app.use(express.static("public"));
 app.use(methodOverride('_method'));
 
 
-// 회원인증관련
+// npm install socket.io
+// 양방향 통신
+const http = require('http').createServer(app);
+const {Server} = require('socket.io');
+const io = new Server(http);
+
+
+
+var db;
+MongoClient.connect(process.env.DB_URL, function(err, client){
+    if(err) return console.log(err);
+
+    db = client.db('swab');
+    app.db = db;
+    
+    // 쌩 nodejs-express로 서버띄울때는 app.listen
+    http.listen(process.env.PORT, function(){
+        console.log('listening on 8080');
+    });
+});
+
+
+app.get('/socket', function(req, res){
+    res.render('socket.ejs')
+});
+
+io.on('connection', function(socket){
+    console.log('유저접속됨')
+
+    
+    socket.on('enter-room', function(data){
+        // 채팅방 만들기
+        socket.join('room1');
+    });
+
+
+    socket.on('user-send', function(data){
+        // 모든 유저에게 메세지 보내줌
+        // io.emit('broadcast', data);
+
+        // socket.id에 해당하는 사람에게만 전송
+        // io.on 파라미터 socket에 접속유저의 정보가 들어있슴.
+        io.to(socket.id).emit('broadcast', data);
+    });
+    
+
+    socket.on('room1-send', function(data){
+        io.to('room1').emit('broadcast', data);
+    })
+
+});
+
+
+
+// // npm install multer 
+// 이미지 업로드 라이브러리.
+let multer = require('multer');
+
+var storage = multer.diskStorage({
+    destination : function(req, file, cb){
+        cb(null, './public/images');
+    },
+    filename : function(req, file, cb){
+        // 한글깨짐현상 방지
+        file.originalname = Buffer.from(file.originalname, "latin1").toString("utf8");
+        cb(null, file.originalname + new Date())
+    },
+    filefilter : function(req, file, cb){
+        var ext = path.extname(file.originalname);
+        if(ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg'){
+            return callback(new Error('PNG, JPG 확장자만 업로드 가능합니다.'));
+        }
+        callback(null, true)
+    },
+    limits : {
+        fileSize : 1024 * 1024
+    }
+});
+
+//램에 저장하는법
+// var storage = multer.memoryStorage({});
+
+var upload = multer({storage : storage});
+
+
+
+// 회원인증 관련 passport
+// npm install passport passport-local express-session
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const session = require('express-session');
+const e = require('express');
+// const MongoStore = require('connect-mongo');
+
+
 app.use(session({
     secret : 'secretCode', 
     resave : true, 
@@ -34,17 +137,11 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-var db;
-MongoClient.connect(process.env.DB_URL, function(err, client){
-    if(err) return console.log(err);
 
-    db = client.db('swab');
-    app.db = db;
 
-    app.listen(process.env.PORT, function(){
-        console.log('listening on 8080');
-    });
-});
+
+
+
 
 
 
@@ -52,17 +149,17 @@ function isLogin(req, res, next){
     if(req.user){
         next()
     } else {
-        res.redirect('/login');
+        res.redirect('./member/login');
     }
 }
 
 
 app.get('/login', function(req, res){
-    res.render('login.ejs');
+    res.render('./member/login.ejs');
 });
 
 app.get('/join', function(req, res){
-    res.render('join.ejs');
+    res.render('./member/join.ejs');
 });
 
 
@@ -72,7 +169,13 @@ app.get('/cart', function(req, res){
 
 
 app.get('/', function(req, res){
-    res.render('index.ejs');
+    db.collection('bookInfo').find().toArray((err, result)=>{
+        if(req.user != undefined) { 
+            res.render('index.ejs', { book : result, user : req.user.id });
+        } else {
+            res.render('index.ejs', { book : result });
+        }
+    })
 });
 
 
@@ -85,8 +188,9 @@ app.use('/book', require('./routes/book.js'));
 
 
 app.get('/myPage', isLogin, (req, res)=>{
-    res.render('myPage.ejs')
+    res.render('./myPage/myPage.ejs')
 })
+
 app.use('/myPage', require('./routes/myPage.js'));
 
 
@@ -197,10 +301,64 @@ app.get('/addBook', (req, res)=>{
     res.render('addBook.ejs')
 });
 
-app.post('/addBook', (req, res)=>{
+// upload.single 파라미터 안에는 input name속성
+// upload.array('input name', 10) 2번째인자는 받을 갯수
+app.post('/upload', upload.array('file', 5), (req,res)=>{
+    res.send(`
+        <script>
+            alert('등록 완료');
+            location.href='/';
+        </script>
+    `)
+});
+
+app.get('/images/:img', function(req, res){
+    res.sendFile(__dirname + '/public/image' + req.params.img)
+})
+
+app.post('/chat', isLogin,function(req, res){
+
+    const newChat = {
+        member : [ req.body.createUser, req.user.id ],
+        date : new Date(),
+        title : req.body.createUser + "님의 상점",
+        itemId : parseInt(req.body.bookId),
+        itemTitle : req.body.bookTitle
+    }
+
+    db.collection('chatRoom').findOne({ member : newChat.member, itemId : newChat.itemId }, (err, result)=>{
+        if(result == null){
+            db.collection('chatRoom').insertOne( newChat ).then((err, result)=>{
+                res.status(200);
+            })
+        }
+    });
+
+});
+
+
+
+app.get('/chat/:user/:id', isLogin, function(req, res){
+
+    db.collection('chatRoom').findOne({ member : [ req.params.user, req.user.id ], itemId : parseInt(req.params.id) } , (err, result)=>{
+        if(err || result == null) { 
+            res.send(`
+            <script>
+                alert('채팅방이 없습니다.');
+                history.back();
+            </script>
+        `)
+            return;
+        } else {
+            res.render('chat.ejs', { chatInfo : result, user : req.user._id });
+        }
+    })
+})
+
+app.post('/addBook', isLogin,(req, res)=>{
     db.collection('counter').findOne({name : '등록된 책'}, (err, result)=>{
         var totalBook = result.totalBook;
-        db.collection('qna').insertOne({_id : totalBook + 1, title: req.body.title, content: req.body.content}, (err, result)=>{
+        db.collection('qna').insertOne({_id : totalBook + 1, bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, createUser : req.user.id}, (err, result)=>{
             db.collection('counter').updateOne({name:'등록된 책'}, {$inc : {totalBook : 1}}, (err, result)=>{
                 if(err) console.log(err);
     
@@ -213,6 +371,56 @@ app.post('/addBook', (req, res)=>{
             })
         })
     })
+});
+
+app.get('/message/:id', (req, res)=>{
+
+   // 일반 get, post요청은 1:1 요청/응답인데 header변경을 통해 여러번 응답 가능
+   // server -> user 일방적 통신 가능
+    res.writeHead(200, {
+        "Connection" : "keep-alive",
+        "Content-Type" : "text/event-stream",
+        "Cache-Control" : "no-cache",
+    });
+
+    db.collection('message').find({ parent : req.params.id }).toArray((err, result)=>{
+        // 데이터 전송
+        // console.log(JSON.stringify(result))
+        res.write('event: test\n');
+        res.write('data: ' + JSON.stringify(result) + '\n\n');
+    });
+
+
+    // 컬렉션 안의 원하는 document만 감시하고 싶으면 match 안에 find 조건. fullDocument 붙임
+    // 조건안의 document가 추가/수정/삭제 되면~
+    const pipeLine = [
+        { $match : { 'fullDocument.parent' : req.params.id }}
+    ]
+
+    // db변동사항을 감지하는 change stream
+    const collection = db.collection('message');
+    const changeStream = collection.watch(pipeLine);
+    changeStream.on('change', (result)=>{
+        // console.log(result.fullDocument)
+        res.write('event: test\n');
+        res.write('data: ' + JSON.stringify([result.fullDocument]) + '\n\n');
+    });
+})
+
+app.post('/message', isLogin,(req, res)=>{
+
+    db.collection('message').insertOne({ userId : req.user._id, parent : req.body.parent, content : req.body.content, date : new Date() }, (err, result)=>{
+        if(err) return;
+        res.status(200);
+    })
+
+})
+
+app.get('/bookInfo/:id', (req, res)=>{
+    db.collection('bookInfo').findOne({ _id : parseInt(req.params.id)}, (err, result)=>{
+        if(err) console.log(err)
+        res.render('bookInfo.ejs', { book : result });
+    });
 });
 
 

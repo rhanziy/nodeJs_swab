@@ -22,17 +22,17 @@
       </div>
       
       <ul class="list-group">
-          <% for(var i = 0; i < qnas.length; i++){ %>
+          <% qnas.forEach(function(e){ %>
             <li class="list-unstyled list-group-item py-3">
-                <p class="text-small">no.<%= qnas[i]._id %></p>
-                <h5><strong>제목</strong> <%= qnas[i].title %></h5>
-                <p><strong>내용</strong> <%= qnas[i].content %></p>
-                <% if(user.equals(qnas[i].createUser)) { %>  
-                    <button class="btn btn-outline-primary edit" data-id="<%= qnas[i]._id %>">수정</button>
-                    <button class="btn btn-outline-danger delete" data-id="<%= qnas[i]._id %>">삭제</button>
+                <p class="text-small">no.<%= e._id %></p>
+                <h5><strong>제목</strong> <%= e.title %></h5>
+                <p><strong>내용</strong> <%= e.content %></p>
+                <% if(user.equals(e.createUser)) { %>  
+                    <button class="btn btn-outline-primary edit" data-id="<%= e._id %>">수정</button>
+                    <button class="btn btn-outline-danger delete" data-id="<%= e._id %>">삭제</button>
                 <% } %>
             </li>
-          <% } %> 
+          <% }) %> 
       </ul>
       <div class="container my-3" align="right">
           <button class="btn btn-outline-secondary" onclick="location.href='/write'">문의 작성</button>

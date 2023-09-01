@@ -10,8 +10,8 @@
 </head>
 <body>
     <div class="container py-2">
-
-    <%- include('nav.ejs')%>
+    
+    <%- include('nav.ejs') %>
     
     <main>
                 
@@ -24,18 +24,20 @@
             <h5>오늘의 책 둘러보기</h5>
             <button class="addBook">등록</button>
         </div>
-        <div class="row row-cols-1 row-cols-md-5">
+        <div class="row row-cols-1 row-cols-md-4">
+            <% book.forEach(function(e){ %>
             <div class="col md-3">
                 <div class="card rounded-3 shadow-sm">
                     <div class="card-body">
                         <img src="https://www.suwon.go.kr/resources/web/reserv/images/no_img.png"/>
                         <ul class="list-unstyled mt-4">
-                            <li><strong><a class="link-secondary text-decoration-none" href="#">Book Title</a></strong></li>
-                            <li class="text-muted mt-1">Book Content</li>
+                            <li><strong><a class="link-secondary text-decoration-none" href="/bookInfo/<%= e._id%>"><%= e.bookTitle%></a></strong></li>
+                            <li class="text-muted mt-1"><%= e.author%></li>
                         </ul>
                     </div>
                 </div>
             </div>
+            <% }) %>
             
             
         </div>
@@ -49,6 +51,7 @@
     </div>
 
     <script>
+
         $('.addBook').click(function(){
             location.href = '/addBook';
         });

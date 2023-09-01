@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>swab</title>
+    <link href="/cover.css" type="text/css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+</head>
+<style>
+.chat-content {
+  height: 450px;
+  overflow-y: scroll;
+  padding: 10px;
+}
+.chat-content li {
+  margin-top: 10px;
+  list-style: none;
+}
+.text-small {
+  font-size: 12px;
+  color: gray;
+  margin-bottom: 0;
+}
+.chat-box {
+  background: #eee;
+  padding: 5px;
+  border-radius: 5px;
+  float: left;
+}
+.mine {
+  float: right;
+  background: #e3c4ff;
+} 
+
+</style>
+<body>
+    <div class="container py-2">
+    <%- include('../nav.ejs')%>
+    
+    <main>
+        <div class="container p-4 detail">
+
+            <div class="row">
+              <div class="col-3">
+                <ul class="list-group chat-list">
+                  <% chatInfo.forEach(function(e){ %>
+                    <li class="list-group-item" data-id="<%= e._id %>" style="cursor:pointer; user-select: none;">
+                        <h6><%= e.title%></h6>
+                        <h6 class="text-small"><%= e.itemTitle%></h6>
+                    </li>
+                  <% }) %>
+                 </ul>
+               </div>
+               
+               <div class="col-9 p-0">
+                 <div class="chat-room">
+                    <ul class="list-group chat-content">
+                        
+                    </ul>
+                  <div class="input-group">
+                    <input class="form-control" id="chat-input">
+                    <button class="btn btn-secondary" id="send">전송</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          
+          </div> 
+    </main>
+    
+    <%- include('../footer.html')%>
+    </div>
+    <script>    
+
+        var currentChat 
+        var eventSource
+
+        $('.list-group-item').click(function(e){
+            currentChat = e.currentTarget.dataset.id;
+            
+            $('.list-group-item').css('background-color', "#fff")
+            $(this).css('background-color', "#eee");
+
+            $('.chat-content').html('');
+
+            // 실시간 채널 나가는법
+            if(eventSource != undefined){
+                eventSource.close()
+            }
+
+            // 데이터 수신 get
+            eventSource = new EventSource('/message/' + currentChat);
+            // 첫번째 인자는 sever.js에서 작성한 event 작명이름
+            eventSource.addEventListener('test', function(e){
+                let getMessage = JSON.parse(e.data)
+
+                getMessage.forEach(i => {
+                    $('.chat-content').append(`
+                        <li><span class="chat-box mine">${i.content}</span></li>
+                    `)
+                })
+            })
+        });
+
+        $('#send').click(function(){
+            var message = $('#chat-input').val();
+            
+            var data = {
+                parent : currentChat,
+                content : message
+            }
+            $('#chat-input').val('');
+
+            $.post('/message', data).done(()=>{
+                console.log('전송 성공');
+            });
+
+        });
+
+
+
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+</html>
