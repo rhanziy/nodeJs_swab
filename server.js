@@ -25,6 +25,10 @@ app.use(express.urlencoded({extended : true}));
 app.use(express.static("public"));
 
 
+// npm install bcrypt 비밀번호 암호화
+const bcrypt = require("bcrypt");
+
+
 // npm install method-override
 // form method PUT, app.put 가능하게해주는 라이브러리
 const methodOverride = require('method-override');
@@ -96,7 +100,7 @@ var storage = multer.diskStorage({
     filename : function(req, file, cb){
         // 한글깨짐현상 방지
         file.originalname = Buffer.from(file.originalname, "latin1").toString("utf8");
-        cb(null, file.originalname + new Date())
+        cb(null,  Date.now() +"_"+ file.originalname);
     },
     filefilter : function(req, file, cb){
         var ext = path.extname(file.originalname);
@@ -122,40 +126,36 @@ var upload = multer({storage : storage});
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const session = require('express-session');
-const e = require('express');
-// const MongoStore = require('connect-mongo');
+const MongoDBStore = require('connect-mongodb-session')(session);
 
+const store = new MongoDBStore({
+    uri : process.env.DB_URL,
+    databaseName : 'swab',
+    collection : 'sessions',
+    expiresAfterSeconds: 60 * 60 * 24 * 14 
+});
 
 app.use(session({
     secret : 'secretCode', 
-    resave : true, 
+    resave : false, 
     saveUninitialized : false,
-    // store: MongoStore.create({ mongoUrl:"mongodb://localhost:27017/swab" }),
-    // cookie : {maxAge:(3.6e+6)*24}
+    store: store,
 }));
 app.use(passport.initialize());
-app.use(passport.session());
-
-
-
-
-
-
-
 
 
 
 function isLogin(req, res, next){
-    if(req.user){
+    if(req.session){
         next()
     } else {
-        res.redirect('./member/login');
+        res.redirect('/login');
     }
 }
 
 
 app.get('/login', function(req, res){
-    res.render('./member/login.ejs');
+    res.render('./member/login.ejs', { user : req.session });
 });
 
 app.get('/join', function(req, res){
@@ -169,12 +169,10 @@ app.get('/cart', function(req, res){
 
 
 app.get('/', function(req, res){
+    console.log(req.session)
+
     db.collection('bookInfo').find().toArray((err, result)=>{
-        if(req.user != undefined) { 
-            res.render('index.ejs', { book : result, user : req.user.id });
-        } else {
-            res.render('index.ejs', { book : result });
-        }
+        res.render('index.ejs', { book : result, user : req.session });
     })
 });
 
@@ -188,7 +186,7 @@ app.use('/book', require('./routes/book.js'));
 
 
 app.get('/myPage', isLogin, (req, res)=>{
-    res.render('./myPage/myPage.ejs')
+    res.render('./myPage/myPage.ejs', { user : req.session })
 })
 
 app.use('/myPage', require('./routes/myPage.js'));
@@ -206,9 +204,22 @@ app.get('/fail', (req,res)=>{
 
 
 
+const salt = 12;
+
+app.post('/register', async (req, res)=>{
+
+    const encryptedPw = await bcrypt.hash(req.body.pw, salt);
+    
+    db.collection('login').insertOne({ id : req.body.id, pw: encryptedPw }, ()=>{
+        res.redirect('/login');
+    });
+
+});
+
+
 app.post('/login', passport.authenticate('local', { 
         failureRedirect : '/fail' 
-    }), (req, res)=>{
+    }), async (req, res)=>{    
     res.redirect('/');
 });
 
@@ -219,17 +230,27 @@ passport.use(new LocalStrategy({
     session: true,
     passReqToCallback: false,
   }, function (inputId, inputPw, done) {
-    console.log(inputId, inputPw);
-    db.collection('login').findOne({ id: inputId }, function (err, result) {
-      if (err) return done(err);
-  
-      if (!result) return done(null, false, { message: '존재하지 않는 아이디입니다.' })
-      if (inputPw == result.pw) {
-        return done(null, result)
-      } else {
-        return done(null, false, { message: '비밀번호가 틀렸습니다.' })
-      }
-    })
+    console.log(inputId, inputPw)
+    try {
+        db.collection('login').findOne({ id: inputId }, async function (err, result) {
+            console.log(result);
+            if (result) {
+                const isEqualPw = await bcrypt.compare(inputPw, result.pw);
+
+                if(isEqualPw){
+                    return done(null, result);
+                } else {
+                    return done(null, false, { message: '비밀번호가 일치하지않습니다.' });
+                }
+                
+            } else {
+                return done(null, false, { message: '존재하지 않는 아이디입니다.' })
+            }
+
+        });
+    } catch(e) {
+        console.log(e);
+    }
 }));
 
 // user.id 라는 이름으로 세션생성(passport new LocalStrategy 객체의 결과가 user로 들어간다.)
@@ -241,15 +262,21 @@ passport.serializeUser(function(user, done){
 passport.deserializeUser(function(userId, done){
     db.collection('login').findOne({ id : userId }, function(err, result){
         if(err) console.log(err);
-        done(null, result)
+        done(null, result);
     })
 })
 
-app.post('/register', (req, res)=>{
-    db.collection('login').insertOne({ id : req.body.id, pw: req.body.pw }, (err, result)=>{
-        res.redirect('/login');
-    });
-});
+app.get('/logout', async(req, res)=>{
+    try {
+        if(req.session){
+            req.session.destroy();
+        }
+        res.redirect("/");
+    } catch(e) {
+       console.log(e);
+    }
+})
+
 
 app.post('/add', (req, res)=>{
 
@@ -297,19 +324,28 @@ app.put('/edit/:id', function(req,res){
 });
 
 
-app.get('/addBook', (req, res)=>{
-    res.render('addBook.ejs')
+app.get('/addBook', isLogin, (req, res)=>{
+    res.render('addBook.ejs', { user : req.session })
 });
 
 // upload.single 파라미터 안에는 input name속성
 // upload.array('input name', 10) 2번째인자는 받을 갯수
-app.post('/upload', upload.array('file', 5), (req,res)=>{
-    res.send(`
-        <script>
-            alert('등록 완료');
-            location.href='/';
-        </script>
-    `)
+app.post('/upload', isLogin, upload.array('file', 5), (req, res)=>{
+    db.collection('counter').findOne({name : '등록된 책'}, (err, result)=>{
+        var totalBook = result.totalBook;
+        db.collection('bookInfo').insertOne({_id : totalBook + 1, bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, createUser : req.session.passport.user}, (err, result)=>{
+            db.collection('counter').updateOne({name:'등록된 책'}, {$inc : {totalBook : 1}}, (err, result)=>{
+                if(err) console.log(err);
+    
+                res.send(
+                    `<script>
+                        alert('등록이 완료되었습니다.');
+                        location.href='/';
+                    </script>`
+                )
+            })
+        })
+    })
 });
 
 app.get('/images/:img', function(req, res){
@@ -355,23 +391,7 @@ app.get('/chat/:user/:id', isLogin, function(req, res){
     })
 })
 
-app.post('/addBook', isLogin,(req, res)=>{
-    db.collection('counter').findOne({name : '등록된 책'}, (err, result)=>{
-        var totalBook = result.totalBook;
-        db.collection('qna').insertOne({_id : totalBook + 1, bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, createUser : req.user.id}, (err, result)=>{
-            db.collection('counter').updateOne({name:'등록된 책'}, {$inc : {totalBook : 1}}, (err, result)=>{
-                if(err) console.log(err);
-    
-                res.send(
-                    `<script>
-                        alert('등록이 완료되었습니다.');
-                        location.href='/';
-                    </script>`
-                )
-            })
-        })
-    })
-});
+
 
 app.get('/message/:id', (req, res)=>{
 
