@@ -1,7 +1,7 @@
 var router = require('express').Router();
 
 function isLogin(req, res, next){
-    if(req.user){
+    if(req.session){
         next()
     } else {
         res.redirect('/login');
@@ -16,14 +16,15 @@ router.get('/myPost', (req, res)=>{
 
 router.get('/myChat', (req,res)=>{
 
-    res.app.db.collection('chatRoom').find({ "member.1" : { $eq : req.user.id } }).toArray((err, result)=>{
-            res.render('./myPage/myChat.ejs', { chatInfo : result, user : req.user._id });
+    res.app.db.collection('chatRoom').find({ "member.1" : { $eq : req.session.passport.user } }).toArray((err, result)=>{
+        res.render('./myPage/myChat.ejs', { chatInfo : result, user : req.session});
     })  
 })
 
+
 router.get('/myQnA', (req, res)=>{
-    res.app.db.collection('qna').find().toArray((err, result)=>{
-        res.render('./myPage/myQnA.ejs', { qnas : result, user : req.user._id });
+    res.app.db.collection('qna').find({ createUser : req.session.passport.user }).toArray((err, result)=>{
+        res.render('./myPage/myQnA.ejs', { qnas : result, user : req.session });
     })
 })
 

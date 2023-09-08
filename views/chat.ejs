@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>swab</title>
-    <link href="/cover.css" type="text/css" rel="stylesheet">
+    <link href="/css/cover.css" type="text/css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 </head>
@@ -31,7 +31,7 @@
 }
 .mine {
   float: right;
-  background: #e3c4ff;
+  background: #daf0bd;
 } 
 
 </style>
@@ -47,73 +47,91 @@
                 <ul class="list-group chat-list">
                   <li class="list-group-item">
                     <h6><%= chatInfo.title%></h6>
-                    <h6 class="text-small"><%= chatInfo.itemTitle %></h6>
+                    <h6 class="text-small"><%= bookInfo.bookTitle %></h6>
                   </li>
                  </ul>
-               </div>
+                 <button type="button" onclick="history.back()" class="btn btn-outline-secondary mt-3">채팅 나가기</button>
+                 <button id="outBtn" class="btn btn-outline-danger mt-3">채팅방 삭제</button>
+              </div>
                
                <div class="col-9 p-0">
                  <div class="chat-room">
                     <ul class="list-group chat-content">
-                    <!-- <%if(user.equals(chatInfo.userId)) { %>
-                        <li><span class="chat-box mine"><%= chatInfo.content%></span></li>
-                    <% } else {%>
-                        <li><span class="chat-box"><%= chatInfo.content%></span></li>
-                    <% } %> -->
+
                     </ul>
                   <div class="input-group">
                     <input class="form-control" id="chat-input">
-                    <button class="btn btn-secondary" id="send">전송</button>
+                    <button class="btn btn-success" id="send">전송</button>
                   </div>
                 </div>
               </div>
             </div>
           
-          </div> 
+        </div> 
     </main>
     
     <%- include('footer.html')%>
     </div>
     <script>
 
-        $(document).ready(function(){
-            
-            if(eventSource != undefined) {
-                eventSource.close()
-            }
+    $(document).ready(function(){
+      
+      if(eventSource != undefined) {
+        eventSource.close()
+      }
 
+      var eventSource = new EventSource('/message/' + "<%= chatInfo._id%>");
+      
+      eventSource.addEventListener('test', async function (e){
+        let getMessage = await JSON.parse(e.data);
+        getMessage.forEach(i => {
+          $('.chat-content').append(`
+              <li><span class="chat-box mine">${i.content}</span></li>
 
-            var eventSource = new EventSource('/message/' + "<%= chatInfo._id%>")
-            eventSource.addEventListener('test', function(e){
-
-                let getMessage = JSON.parse(e.data);
-
-                getMessage.forEach(i => {
-                    $('.chat-content').append(`
-                        <li><span class="chat-box mine">${i.content}</span></li>
-                    `)
-                })
-            })
-        })        
-
-
-        $('#send').click(function(){
-            var message = $('#chat-input').val();
-
-            var data = {
-                parent : '<%= chatInfo._id %>',
-                content : message
-            }
-
-            $('#chat-input').val('');
-
-            $.post('/message', data).done(()=>{
-                console.log('전송 성공');
-            })
+          `)
         });
+      });
 
-    </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    });        
+
+
+    $('#send').click(function(){
+        var message = $('#chat-input').val();
+        var blank_pattern = /^\s+|\s+$/g;
+        
+        if(message.replace(blank_pattern, '') == ""){
+          return false;
+        }
+
+        var data = {
+          parent : '<%= chatInfo._id %>',
+          content : message,
+          bookTitle : '<%= bookInfo.bookTitle %>'
+        }
+
+        $('#chat-input').val('');
+
+        $.post('/message', data).done(()=>{
+            console.log('전송 성공');
+        })
+    });
+
+    $('#outBtn').click(function(){
+      alert('채팅방을 나가시겠습니까?');
+
+      $.ajax({
+        method : 'DELETE',
+        url: '/out/' + "<%= chatInfo._id%>"
+      }).done(()=>{
+        location.href='/';
+      }).fail((xhr, textStatus, errThrown)=> {
+        console.log(xhr, textStatus, errorThrown);
+      })
+    })
+
+  </script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+  <script src="https://kit.fontawesome.com/734a7daae5.js" ></script>
 </body>
 </html>

@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>swab</title>
-    <link href="/cover.css" type="text/css" rel="stylesheet">
+    <link href="/css/cover.css" type="text/css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 </head>
 <style>
+.list-group-item > h6 {
+  padding-top:8px;
+}
 .chat-content {
   height: 450px;
   overflow-y: scroll;
@@ -31,7 +34,7 @@
 }
 .mine {
   float: right;
-  background: #e3c4ff;
+  background: #daf0bd;
 } 
 
 </style>
@@ -45,11 +48,10 @@
             <div class="row">
               <div class="col-3">
                 <ul class="list-group chat-list">
-                  <% chatInfo.forEach(function(e){ %>
-                    <li class="list-group-item" data-id="<%= e._id %>" style="cursor:pointer; user-select: none;">
-                        <h6><%= e.title%></h6>
-                        <h6 class="text-small"><%= e.itemTitle%></h6>
-                    </li>
+                  <% chatInfo.forEach((e)=>{ %>
+                  <li class="list-group-item" data-id="<%= e._id %>" style="cursor:pointer; user-select: none;">
+                    <h6><%= e.member[0]%>님과의 대화</h6>
+                  </li>
                   <% }) %>
                  </ul>
                </div>
@@ -74,50 +76,49 @@
     </div>
     <script>    
 
-        var currentChat 
-        var eventSource
+      var currentChat 
+      var eventSource
 
-        $('.list-group-item').click(function(e){
-            currentChat = e.currentTarget.dataset.id;
-            
-            $('.list-group-item').css('background-color', "#fff")
-            $(this).css('background-color', "#eee");
+      $('.list-group-item').click(function(e){
+          currentChat = e.currentTarget.dataset.id;
+          
+          $('.list-group-item').css('background-color', "#fff")
+          $(this).css('background-color', "#eee");
 
-            $('.chat-content').html('');
+          $('.chat-content').html('');
 
-            // 실시간 채널 나가는법
-            if(eventSource != undefined){
-                eventSource.close()
-            }
+          // 실시간 채널 나가는법
+          if(eventSource != undefined){
+              eventSource.close()
+          }
 
-            // 데이터 수신 get
-            eventSource = new EventSource('/message/' + currentChat);
-            // 첫번째 인자는 sever.js에서 작성한 event 작명이름
-            eventSource.addEventListener('test', function(e){
-                let getMessage = JSON.parse(e.data)
+          // 데이터 수신 get
+          eventSource = new EventSource('/message/' + currentChat);
+          // 첫번째 인자는 sever.js에서 작성한 event 작명이름
+          eventSource.addEventListener('test', async function(e){
+              let getMessage = await JSON.parse(e.data)
+              getMessage.forEach(i => {
+                  $('.chat-content').append(`
+                      <li><span class="chat-box mine">${i.content}</span></li>
+                  `)
+              })
+          })
+      });
 
-                getMessage.forEach(i => {
-                    $('.chat-content').append(`
-                        <li><span class="chat-box mine">${i.content}</span></li>
-                    `)
-                })
-            })
-        });
+      $('#send').click(function(){
+          var message = $('#chat-input').val();
+          
+          var data = {
+              parent : currentChat,
+              content : message
+          }
+          $('#chat-input').val('');
 
-        $('#send').click(function(){
-            var message = $('#chat-input').val();
-            
-            var data = {
-                parent : currentChat,
-                content : message
-            }
-            $('#chat-input').val('');
+          $.post('/message', data).done(()=>{
+              console.log('전송 성공');
+          });
 
-            $.post('/message', data).done(()=>{
-                console.log('전송 성공');
-            });
-
-        });
+      });
 
 
 
