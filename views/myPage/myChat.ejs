@@ -49,9 +49,10 @@
               <div class="col-3">
                 <ul class="list-group chat-list">
                   <% chatInfo.forEach((e)=>{ %>
-                  <li class="list-group-item" data-id="<%= e._id %>" style="cursor:pointer; user-select: none;">
-                    <h6><%= e.member[0]%>님과의 대화</h6>
-                  </li>
+                    <li class="list-group-item" data-id="<%= e._id %>" style="cursor:pointer; user-select: none;">
+                      <h6><%= e.member[0]%>님과의 대화</h6>
+
+                    </li>
                   <% }) %>
                  </ul>
                </div>

@@ -75,7 +75,7 @@
 }
 
 .swiper-pagination-bullet-active {
-     background-color: rgba(255,255,255,0.5) !important;
+    background-color: rgba(255,255,255,0.5) !important;
 }
 
 @media screen and (max-width:768px) {
@@ -102,6 +102,7 @@
     <div class="container py-2">
     <%- include('nav.ejs')%>
     <% var fileName = book.fileName %>
+
     <main>
         <div class="mainCon p-4 my-5">
             <div class="swiper imgBox">
@@ -131,7 +132,7 @@
                         <div class="btn btn-warning mine" id="editBtn" style="cursor: pointer;">수정하기</div>
                         <div class="btn btn-danger mine" id="delBtn" style="cursor: pointer;">삭제하기</div>
                     </div>
-                <% } else { %>
+                <% } else if(book.status == '1') { %>
                     <div class="btnBox">
                         <div class="btn btn-danger" style="cursor: pointer;">찜하기</div>
                         <div class="btn btn-success" id="chat" style="cursor: pointer;">스왑톡</div>
@@ -146,7 +147,13 @@
     </div>
 
     <script>
-        console.log("<%- fileName%>")
+        if('<%- book.status%>' == '0'){
+            $('.swiper-wrapper').prepend(`
+                <div class="swiper-slide">
+                    <img src="/fin.png" style="width:100%; height:auto;">
+                </div>
+            `)
+        }
 
         $(document).ready(function(){  
             const swiper = new Swiper('.swiper', {

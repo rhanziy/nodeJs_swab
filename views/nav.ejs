@@ -1,3 +1,8 @@
+<style>
+
+a{ font-size:14px; }
+
+</style>
 <header>
     <div class="d-flex flex-column flex-md-row align-items-center pb-2 mb-2 border-bottom text-white">
     <a href="/" class="logo d-flex align-items-center text-dark text-decoration-none">
@@ -6,13 +11,13 @@
 
         <% if(user.passport) { %>
         <nav class="d-inline-flex mt-2 mt-md-0 ms-md-auto login">
-            <a class="me-3 py-2 text-dark text-decoration-none" href="/myPage">My Page</a>
-            <a class="me-3 py-2 text-dark text-decoration-none" href="/logout">Logout</a>
+            <a class="me-3 pt-2 text-dark text-decoration-none" href="/myPage">My Page</a>
+            <a class="me-3 pt-2 text-dark text-decoration-none" href="/logout">Logout</a>
         </nav>
        <% } else {%>
         <nav class="d-inline-flex mt-2 mt-md-0 ms-md-auto">
-            <a class="me-3 py-2 text-dark text-decoration-none" href="/login">Login</a>
-            <a class="py-2 text-dark text-decoration-none" href="/join">Join</a>
+            <a class="me-3 pt-2 text-dark text-decoration-none" href="/login">Login</a>
+            <a class="pt-2 text-dark text-decoration-none" href="/join">Join</a>
         </nav> 
         <% } %>
     

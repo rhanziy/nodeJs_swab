@@ -145,8 +145,8 @@ app.get('/cart', function(req, res){
 
 
 app.get('/', function(req, res){
-    db.collection('bookInfo').find({}, {_id:0, cate:0, createUser:0, "fileName.1":0}).toArray((err, result)=>{
-
+    
+    db.collection('bookInfo').find({ status : '1' }, {"fileName.0": 1}).toArray((err, result)=>{
         res.render('index.ejs', { book : result, user : req.session });
     })
 });
@@ -285,6 +285,7 @@ app.post('/add', isLogin, (req, res)=>{
     })
 });
 
+
 app.get('/edit/:id', isLogin, function(req, res){
     db.collection('qna').findOne({_id : parseInt(req.params.id)}, function(err, result){
         if(result == null) {
@@ -296,7 +297,8 @@ app.get('/edit/:id', isLogin, function(req, res){
 });
 
 app.put('/edit/:id', function(req,res){
-    db.collection('qna').updateOne({_id : parseInt(req.params.id)}, {$set : {title : req.body.title, content : req.body.title}}, function(){
+
+    db.collection('qna').updateOne({_id : parseInt(req.params.id)}, {$set : {title : req.body.title, content : req.body.title, status: req.body.status}}, function(){
         res.send(
             `<script>
                 alert('수정이 완료되었습니다.');
@@ -351,6 +353,8 @@ app.get('/editBook/:createUser/:bookId', isLogin, (req,res)=>{
 })
 
 app.put('/editBook/:id', upload.array('file', 3), function(req,res){
+    
+    var exFile = req.body.exFile;
 
     let fileName = [];
     if(req.files){
@@ -359,8 +363,12 @@ app.put('/editBook/:id', upload.array('file', 3), function(req,res){
         })
     }
 
+    if(exFile){
+        exFile.length < 4 ? fileName.push(...exFile) : fileName.push(exFile)
+    }
+    
     db.collection('bookInfo').updateOne({_id : parseInt(req.params.id)}, 
-        {$set : { fileName : fileName, bookTitle: req.body.title, author: req.body.author, cate : req.body.cate }}, (err)=>{
+        {$set : { fileName : fileName, bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, status : req.body.status }}, (err)=>{
         if(err) console.log(err)
         res.send(
             `<script>
@@ -381,26 +389,27 @@ app.get('/bookInfo/:id', (req, res)=>{
 // upload.single 파라미터 안에는 input name속성
 // upload.array('input name', 10) 2번째인자는 받을 갯수
 app.post('/upload', isLogin, upload.array('file', 3), (req, res)=>{
+
     let fileName = [];
     req.files.map((e)=> {
         fileName.push(e.filename);
     })
 
-    db.collection('counter').findOne({name : '등록된 책'}, (err, result)=>{
-        var totalBook = result.totalBook;
-        db.collection('bookInfo').insertOne({_id : totalBook + 1, fileName : fileName ,bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, createUser : req.session.passport.user}, ()=>{
-            db.collection('counter').updateOne({name:'등록된 책'}, {$inc : {totalBook : 1}}, (err)=>{
-                if(err) console.log(err);
+    // db.collection('counter').findOne({name : '등록된 책'}, (err, result)=>{
+    //     var totalBook = result.totalBook;
+    //     db.collection('bookInfo').insertOne({_id : totalBook + 1, fileName : fileName ,bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, createUser : req.session.passport.user, status: '1'}, ()=>{
+    //         db.collection('counter').updateOne({name:'등록된 책'}, {$inc : {totalBook : 1}}, (err)=>{
+    //             if(err) console.log(err);
     
-                res.send(
-                    `<script>
-                        alert('등록이 완료되었습니다.');
-                        location.href='/';
-                    </script>`
-                )
-            })
-        })
-    })
+    //             res.send(
+    //                 `<script>
+    //                     alert('등록이 완료되었습니다.');
+    //                     location.href='/';
+    //                 </script>`
+    //             )
+    //         })
+    //     })
+    // })
 });
 
 
@@ -417,9 +426,10 @@ app.post('/chat', isLogin, function(req, res){
         member : [ req.body.createUser, req.session.passport.user ],
         date : new Date(),
         title : req.body.createUser + "님의 상점",
+        itemId : req.body.bookId
     }
 
-    db.collection('chatRoom').findOne({ member : newChat.member }, (err, result)=>{
+    db.collection('chatRoom').findOne({ member : newChat.member, itemId : req.body.bookId }, (err, result)=>{
         if(result == null){
             db.collection('chatRoom').insertOne( newChat );
         } 
@@ -431,7 +441,7 @@ app.post('/chat', isLogin, function(req, res){
 app.get('/chat/:user/:id', isLogin, function(req, res){
 
     db.collection('bookInfo').findOne({ _id : parseInt(req.params.id) },{ bookTitle : 1 }, (err, bookInfo)=>{
-        db.collection('chatRoom').findOne({ member : [ req.params.user, req.session.passport.user ]} , (err, result)=>{
+        db.collection('chatRoom').findOne({ member : [ req.params.user, req.session.passport.user ], itemId: req.params.id } , (err, result)=>{
             if(result) { 
                 res.render('chat.ejs', { bookInfo : bookInfo, chatInfo : result, user : req.session });
             } else {

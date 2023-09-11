@@ -29,6 +29,12 @@
   border-radius: 5px;
   float: left;
 }
+.item-box {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #c2c2c2;
+  float: left;
+}
 .mine {
   float: right;
   background: #daf0bd;
@@ -81,13 +87,13 @@
       }
 
       var eventSource = new EventSource('/message/' + "<%= chatInfo._id%>");
-      
+
       eventSource.addEventListener('test', async function (e){
         let getMessage = await JSON.parse(e.data);
+      
         getMessage.forEach(i => {
           $('.chat-content').append(`
               <li><span class="chat-box mine">${i.content}</span></li>
-
           `)
         });
       });
@@ -96,24 +102,26 @@
 
 
     $('#send').click(function(){
-        var message = $('#chat-input').val();
-        var blank_pattern = /^\s+|\s+$/g;
-        
-        if(message.replace(blank_pattern, '') == ""){
-          return false;
-        }
 
-        var data = {
-          parent : '<%= chatInfo._id %>',
-          content : message,
-          bookTitle : '<%= bookInfo.bookTitle %>'
-        }
+      var message = $('#chat-input').val();
+      var blank_pattern = /^\s+|\s+$/g;
+      
+      if(message.replace(blank_pattern, '') == ""){
+        return false;
+      }
 
-        $('#chat-input').val('');
+      // if()
 
-        $.post('/message', data).done(()=>{
-            console.log('전송 성공');
-        })
+      var data = {
+        parent : '<%= chatInfo._id %>',
+        content : message
+      }
+
+      $('#chat-input').val('');
+
+      $.post('/message', data).done(()=>{
+          console.log('전송 성공');
+      });
     });
 
     $('#outBtn').click(function(){
@@ -122,11 +130,10 @@
       $.ajax({
         method : 'DELETE',
         url: '/out/' + "<%= chatInfo._id%>"
-      }).done(()=>{
-        location.href='/';
       }).fail((xhr, textStatus, errThrown)=> {
         console.log(xhr, textStatus, errorThrown);
       })
+      location.href='/';
     })
 
   </script>
