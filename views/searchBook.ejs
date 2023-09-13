@@ -12,7 +12,8 @@
 <style>
 
 .card-img {
-    height: 200px;
+    height: 150px;
+    cursor: pointer;
 }
 .card-img img {
     height: 100%;
@@ -20,12 +21,13 @@
     object-position: 50% top;
 }
 
-.main-title {
-    height:30px;
-    line-height: 30px;
+.bookTitle a {
+    font-size:16px;
 }
-
-
+.authorTitle {
+    margin-top:5px;
+    font-size:14px;
+}
 </style>
 <body>
     <div class="container py-2">
@@ -34,25 +36,23 @@
     
     <main>
                 
-        <div class="pb-md-1 mx-auto d-flex">
-            <h5 class="main-title">검색결과</h5>
-        </div>
+        <h4 class="my-4 "><strong>검색결과</strong></h4>
         <div class="row row-cols-1 row-cols-xl-5 row-cols-md-3">
             <% if(searchBook.length > 0) { %>
                 <% searchBook.forEach(function(e){ %>
                     <div class="col my-3">
                         <div class="card rounded-3 shadow-sm">
                             <div class="card-body">
-                                <div class="card-img">
+                                <div class="card-img" onclick="location.href='/bookInfo/<%= e._id%>'">
                                     <% if(e.fileName == '') { %>
                                         <img src="https://www.suwon.go.kr/resources/web/reserv/images/no_img.png"/>
                                     <% } else { %>
                                         <img src="/images/<%= e.fileName[0] %>" />
                                     <% } %>
                                 </div>
-                                <ul class="list-unstyled mt-4">
-                                    <li><strong><a class="link-secondary text-decoration-none" href="/bookInfo/<%= e._id%>"><%= e.bookTitle%></a></strong></li>
-                                    <li class="text-muted mt-1"><%= e.author%></li>
+                                <ul class="list-unstyled mt-3 mb-1">
+                                    <li class="bookTitle"><a class="link-secondary text-decoration-none" href="/bookInfo/<%= e._id%>"><%= e.bookTitle%></a></li>
+                                    <li class="text-muted authorTitle"><%= e.author%></li>
                                 </ul>
                             </div>
                         </div>

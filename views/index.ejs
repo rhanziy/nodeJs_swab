@@ -11,8 +11,10 @@
 </head>
 <style>
 
+
 .card-img {
     height: 200px;
+    cursor: pointer;
 }
 .card-img img {
     height: 100%;
@@ -105,12 +107,12 @@
             <h5 class="main-title">오늘의 책 둘러보기</h5>
             <button class="addBook btn btn-outline-primary">등록</button>
         </div>
-        <div class="row row-cols-1 row-cols-xl-5 row-cols-md-3">
+        <div class="row row-cols-1 row-cols-xl-6 row-cols-md-3">
             <% book.forEach(function(e){ %>
                 <div class="col my-2">
                     <div class="card rounded-2 shadow-sm">
-                        <div class="card-body" onclick="location.href='/bookInfo/<%= e._id%>'">
-                            <div class="card-img" >
+                        <div class="card-body">
+                            <div class="card-img"  onclick="location.href='/bookInfo/<%= e._id%>'">
                                 <% if(e.fileName == '') { %>
                                     <img src="https://www.suwon.go.kr/resources/web/reserv/images/no_img.png"/>
                                 <% } else { %>

@@ -160,9 +160,19 @@ app.get('/write', isLogin, (req, res)=>{
 app.use('/book', require('./routes/book.js'));
 
 
-app.get('/myPage', isLogin, (req, res)=>{
-    res.render('./myPage/myPage.ejs', { user : req.session })
+
+app.get('/myPage', isLogin , (req, res)=>{
+    db.collection('likeItem').findOne({ user : req.session.passport.user }, (err, result)=> {
+        if(result.itemId.length > 0){
+            db.collection('bookInfo').find({ _id : { $in : result.itemId }}).toArray((err, likeItem)=>{
+                return res.render('myPage/myPage.ejs', { likeItem : likeItem, user : req.session })
+            })
+        } else {
+            res.render('myPage/myPage.ejs', { likeItem : '0', user : req.session })
+        }
+    })
 })
+
 
 app.use('/myPage', require('./routes/myPage.js'));
 
@@ -263,7 +273,7 @@ app.get('/logout', async(req, res)=>{
 })
 
 
-app.post('/add', isLogin, (req, res)=>{
+app.post('/addQnA', isLogin, (req, res)=>{
 
     db.collection('counter').findOne({name : '게시물 갯수'}, (err, result)=>{
         var totalQnA = result.totalQnA;
@@ -277,7 +287,7 @@ app.post('/add', isLogin, (req, res)=>{
                 res.send(
                     `<script>
                         alert('등록이 완료되었습니다.');
-                        location.href='/qna';
+                        location.href='/QnA';
                     </script>`
                 )
             })
@@ -286,23 +296,23 @@ app.post('/add', isLogin, (req, res)=>{
 });
 
 
-app.get('/edit/:id', isLogin, function(req, res){
+app.get('/editQnA/:id', isLogin, function(req, res){
     db.collection('qna').findOne({_id : parseInt(req.params.id)}, function(err, result){
         if(result == null) {
             res.sendFile(__dirname + '/views/empty.html');
         } else {
-            res.render('edit.ejs', { data : result, user : req.session.passport.user })
+            res.render('editQnA.ejs', { data : result, user : req.session.passport.user })
         }
     })
 });
 
-app.put('/edit/:id', function(req,res){
+app.put('/editQnA/:id', function(req,res){
 
-    db.collection('qna').updateOne({_id : parseInt(req.params.id)}, {$set : {title : req.body.title, content : req.body.title, status: req.body.status}}, function(){
+    db.collection('qna').updateOne({_id : parseInt(req.params.id)}, {$set : {title : req.body.title, content : req.body.content}}, function(){
         res.send(
             `<script>
                 alert('수정이 완료되었습니다.');
-                location.href='/qna';
+                location.href='/QnA';
             </script>`
         )
     });
@@ -380,11 +390,49 @@ app.put('/editBook/:id', upload.array('file', 3), function(req,res){
 });
 
 app.get('/bookInfo/:id', (req, res)=>{
-    db.collection('bookInfo').findOne({ _id : parseInt(req.params.id)}, (err, result)=>{
-        if(err) console.log(err)
-        res.render('bookInfo.ejs', { book : result, user : req.session });
-    });
+    req.params.id = parseInt(req.params.id)
+    
+        db.collection('bookInfo').findOne({ _id : parseInt(req.params.id)}, (err, bookInfo)=>{
+            db.collection('likeItem').findOne({ user : req.session.passport.user , itemId : { $in : [req.params.id] }}, (err, result1)=>{
+                if(result1){
+                    return res.render('bookInfo.ejs', { book : bookInfo, user : req.session, like : '1'});
+                }
+                res.render('bookInfo.ejs', { book : bookInfo, user : req.session, like : '0'});
+            })
+        });
 });
+
+app.post('/like/:bookId', isLogin, function(req, res){
+    req.params.bookId = parseInt(req.params.bookId)
+
+    db.collection('likeItem').findOne({ user : req.session.passport.user }, (err, result)=>{
+        if(result){
+            db.collection('likeItem').updateOne(
+                { user : req.session.passport.user }, { $push : { itemId : req.params.bookId }}, 
+                (err)=>{
+                    if(err) console.log(err);
+                    res.send('ok');
+            })
+        } else {
+            db.collection('likeItem').insertOne(
+                { user : req.session.passport.user }, { itemId : [ req.params.bookId ] }, 
+                (err)=>{
+                    if(err) console.log(err);
+                    res.send('ok');
+            })
+        }
+    })
+})
+
+app.post('/likeClear/:bookId', isLogin, function(req,res){
+
+    db.collection('likeItem').update(
+        { user : req.session.passport.user },
+        { $pull : { itemId : parseInt(req.params.bookId) } },
+        (err, result)=>{
+            res.send('ok')
+    })
+})
 
 // upload.single 파라미터 안에는 input name속성
 // upload.array('input name', 10) 2번째인자는 받을 갯수
@@ -519,7 +567,7 @@ app.delete('/out/:chatId', isLogin, (req,res)=>{
 
 
 
-app.delete('/delete/:id', isLogin,(req, res)=>{
+app.delete('/deleteQnA/:id', isLogin,(req, res)=>{
     var deleteData = { _id : parseInt(req.params.id), createUser : req.session.passport.user }
 
     db.collection('qna').deleteOne( deleteData, function(err, result){
@@ -527,7 +575,7 @@ app.delete('/delete/:id', isLogin,(req, res)=>{
     }); 
 })
 
-app.delete('/delete/:createUser/:bookId', isLogin,(req, res)=>{
+app.delete('/deleteBook/:createUser/:bookId', isLogin,(req, res)=>{
     var deleteData = { _id : parseInt(req.params.id), createUser : req.session.passport.user }
 
     db.collection('bookInfo').deleteOne( deleteData, function(err, result){
@@ -538,15 +586,15 @@ app.delete('/delete/:createUser/:bookId', isLogin,(req, res)=>{
 
 
 
-app.get('/qna', isLogin ,function(req, res){
+app.get('/QnA', isLogin ,function(req, res){
     db.collection('qna').find().toArray((err, result)=>{
-        res.render('qna.ejs', { qnas : result, user : req.session });
+        res.render('QnA.ejs', { qnas : result, user : req.session });
     });
 
 });
 
 
-app.get('/search', function(req, res){
+app.get('/searchQnA', function(req, res){
     // query string이 담겨져있슴
     // console.log(req.query)
 
@@ -571,7 +619,7 @@ app.get('/search', function(req, res){
 
     // aggregate[{}, {}, {}]로도 가넝
     db.collection('qna').aggregate(keyword).toArray((err, result)=>{
-        res.render('search.ejs', { searchQnA : result })
+        res.render('searchQnA.ejs', { searchQnA : result, user: req.session })
     })
 });
 
@@ -594,4 +642,4 @@ app.get('/searchBook', function(req, res){
     db.collection('bookInfo').aggregate(keyword).toArray((err, result)=>{
         res.render('searchBook.ejs', { searchBook : result, user : req.session })
     })
-})
+});

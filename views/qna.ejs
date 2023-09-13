@@ -53,7 +53,7 @@
             
             $.ajax({
                 method: 'DELETE',
-                url: '/delete/' + id,
+                url: '/deleteQnA/' + id,
             }).done(result => {
                 current.parent('li').fadeOut();
             }).fail((xhr, textStatus, errorThrown) => {
@@ -63,12 +63,12 @@
 
         $('.edit').click(function(e){
             var id = e.target.dataset.id;
-            location.href = '/edit/' + id;
+            location.href = '/editQnA/' + id;
         });
 
         $('#search').click(function(){
             const searchInput = $('#search-input').val();
-            window.location.replace(`/search?value=${searchInput}`);
+            window.location.replace(`/searchQnA?value=${searchInput}`);
         });
 
 
