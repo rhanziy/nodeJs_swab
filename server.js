@@ -395,21 +395,21 @@ app.post('/upload', isLogin, upload.array('file', 3), (req, res)=>{
         fileName.push(e.filename);
     })
 
-    // db.collection('counter').findOne({name : '등록된 책'}, (err, result)=>{
-    //     var totalBook = result.totalBook;
-    //     db.collection('bookInfo').insertOne({_id : totalBook + 1, fileName : fileName ,bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, createUser : req.session.passport.user, status: '1'}, ()=>{
-    //         db.collection('counter').updateOne({name:'등록된 책'}, {$inc : {totalBook : 1}}, (err)=>{
-    //             if(err) console.log(err);
+    db.collection('counter').findOne({name : '등록된 책'}, (err, result)=>{
+        var totalBook = result.totalBook;
+        db.collection('bookInfo').insertOne({_id : totalBook + 1, fileName : fileName ,bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, createUser : req.session.passport.user, status: '1', date : new Date() }, ()=>{
+            db.collection('counter').updateOne({name:'등록된 책'}, {$inc : {totalBook : 1}}, (err)=>{
+                if(err) console.log(err);
     
-    //             res.send(
-    //                 `<script>
-    //                     alert('등록이 완료되었습니다.');
-    //                     location.href='/';
-    //                 </script>`
-    //             )
-    //         })
-    //     })
-    // })
+                res.send(
+                    `<script>
+                        alert('등록이 완료되었습니다.');
+                        location.href='/';
+                    </script>`
+                )
+            })
+        })
+    })
 });
 
 
@@ -426,10 +426,10 @@ app.post('/chat', isLogin, function(req, res){
         member : [ req.body.createUser, req.session.passport.user ],
         date : new Date(),
         title : req.body.createUser + "님의 상점",
-        itemId : req.body.bookId
+        itemId : parseInt(req.body.bookId)
     }
 
-    db.collection('chatRoom').findOne({ member : newChat.member, itemId : req.body.bookId }, (err, result)=>{
+    db.collection('chatRoom').findOne({ member : newChat.member, itemId : newChat.itemId }, (err, result)=>{
         if(result == null){
             db.collection('chatRoom').insertOne( newChat );
         } 
@@ -440,8 +440,10 @@ app.post('/chat', isLogin, function(req, res){
 
 app.get('/chat/:user/:id', isLogin, function(req, res){
 
-    db.collection('bookInfo').findOne({ _id : parseInt(req.params.id) },{ bookTitle : 1 }, (err, bookInfo)=>{
-        db.collection('chatRoom').findOne({ member : [ req.params.user, req.session.passport.user ], itemId: req.params.id } , (err, result)=>{
+    var bookId = parseInt(req.params.id);
+
+    db.collection('bookInfo').findOne({ _id : bookId },{ bookTitle : 1 }, (err, bookInfo)=>{
+        db.collection('chatRoom').findOne({ member : [ req.params.user, req.session.passport.user ], itemId: bookId } , (err, result)=>{
             if(result) { 
                 res.render('chat.ejs', { bookInfo : bookInfo, chatInfo : result, user : req.session });
             } else {
@@ -572,3 +574,24 @@ app.get('/search', function(req, res){
         res.render('search.ejs', { searchQnA : result })
     })
 });
+
+
+app.get('/searchBook', function(req, res){
+
+    var keyword = [
+        {
+            $search: {
+                index : 'bookSearch',
+                text : {
+                    query : req.query.value ,
+                    path: ["bookTitle", "author"]
+                }
+            }
+        },
+        { $sort : { date : 1 }},
+    ]
+
+    db.collection('bookInfo').aggregate(keyword).toArray((err, result)=>{
+        res.render('searchBook.ejs', { searchBook : result, user : req.session })
+    })
+})

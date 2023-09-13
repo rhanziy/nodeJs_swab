@@ -17,11 +17,39 @@ router.get('/myPost', (req, res)=>{
 })
 
 router.get('/myChat', (req,res)=>{
+    // res.app.db.collection('chatRoom').find({ "member.1" : { $eq : req.session.passport.user }}).toArray((err, result)=>{
+    //     res.render('./myPage/myChat.ejs', {  chatInfo : result, user : req.session });    
+    // })
 
-    res.app.db.collection('chatRoom').find({ "member.1" : { $eq : req.session.passport.user }}).toArray((err, result)=>{
-        res.render('./myPage/myChat.ejs', {  chatInfo : result, user : req.session });    
+    res.app.db.collection('chatRoom').aggregate([
+        {
+            $match : { "member.1" : req.session.passport.user }
+        },
+        {
+            $lookup:{
+                from:'bookInfo',
+                localField : "itemId",
+                foreignField : '_id',
+                as : 'bookInfo'
+            }
+        },
+        {
+            $addFields : {
+                fileName : { $arrayElemAt : ["$bookInfo.fileName", 0] }
+            }
+        },
+        {
+            $set :{
+                bookInfo : { $arrayElemAt : ["$bookInfo.bookTitle", 0] },
+            }
+        },
+        {
+            $project : { date : 0, itemId : 0}
+        }
+    ]).toArray((err, result)=>{
+        console.log(result)
+        res.render('./myPage/myChat.ejs', { chatInfo : result, user : req.session });
     })
-
 })
 
 

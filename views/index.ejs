@@ -26,7 +26,13 @@
 }
 .addBook {  height:30px; margin-left: 20px; line-height: 15px;}
 
-
+.bookTitle a {
+    font-size:16px;
+}
+.authorTitle {
+    margin-top:5px;
+    font-size:14px;
+}
 .search-form {
   position: relative;
   top: 50%;
@@ -40,14 +46,14 @@
   transition: all 0.3s ease;
 }
 
-.search-input {
+#search-input {
   position: absolute;
   top: 10px;
-  left: 38px;
+  left: 30px;
   font-size: 14px;
   background: none;
   color: #5a6674;
-  width: 270px;
+  width: 280px;
   height: 20px;
   border: none;
   appearance: none;
@@ -55,7 +61,7 @@
 
 }
 
-.search-button {
+#search {
   position: absolute;
   top: 8px;
   right: 15px;
@@ -69,7 +75,7 @@
   cursor: pointer;
   
 }
-.search-button i {
+#search i {
   width: 20px;
   height: 20px;
   color: #5a6674;
@@ -87,12 +93,12 @@
         <div class="script-header mx-auto text-center text-white">
             <h1 class="logo display-3">Swap book</h1>
             <p>서로의 가치와 취향이 담긴 책을 교환해보세요.</p>
-            <form class="search-form">
-                <input type="search" value="" placeholder="Search" class="search-input">
-                <button type="submit" class="search-button">
-                    <div class="submit-button"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <div class="search-form">
+                <input type="search" id="search-input" value="" placeholder="Search" >
+                <button id="search" type="submit">
+                    <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
-            </form>
+            </div>
         </div>
 
         <div class="pb-md-1 mx-auto d-flex">
@@ -101,19 +107,19 @@
         </div>
         <div class="row row-cols-1 row-cols-xl-5 row-cols-md-3">
             <% book.forEach(function(e){ %>
-                <div class="col my-3">
-                    <div class="card rounded-3 shadow-sm">
-                        <div class="card-body">
-                            <div class="card-img">
+                <div class="col my-2">
+                    <div class="card rounded-2 shadow-sm">
+                        <div class="card-body" onclick="location.href='/bookInfo/<%= e._id%>'">
+                            <div class="card-img" >
                                 <% if(e.fileName == '') { %>
                                     <img src="https://www.suwon.go.kr/resources/web/reserv/images/no_img.png"/>
                                 <% } else { %>
                                     <img src="/images/<%= e.fileName[0] %>" />
                                 <% } %>
                             </div>
-                            <ul class="list-unstyled mt-4">
-                                <li><strong><a class="link-secondary text-decoration-none" href="/bookInfo/<%= e._id%>"><%= e.bookTitle%></a></strong></li>
-                                <li class="text-muted mt-1"><%= e.author%></li>
+                            <ul class="list-unstyled mt-3 mb-1">
+                                <li class="bookTitle"><a class="link-secondary text-decoration-none" href="/bookInfo/<%= e._id%>"><%= e.bookTitle%></a></li>
+                                <li class="text-muted authorTitle"><%= e.author%></li>
                             </ul>
                         </div>
                     </div>
@@ -133,6 +139,19 @@
 
         $('.addBook').click(function(){
             location.href = '/addBook';
+        });
+
+        $('#search').click(function(){
+            let searchInput = $('#search-input').val();
+            const blank_pattern = /^\s+|\s+$/g;
+
+            console.log(searchInput)
+
+            if(!searchInput || searchInput.replace(blank_pattern, '') == "") {
+                alert('검색 키워드를 입력해주세요');
+                return false;
+            }
+            window.location.replace(`/searchBook?value=${searchInput}`);
         });
     </script>
     

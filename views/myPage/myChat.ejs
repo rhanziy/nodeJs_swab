@@ -9,8 +9,22 @@
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 </head>
 <style>
+
+.list-group-item{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 .list-group-item > h6 {
   padding-top:8px;
+}
+
+.thumb {
+  width: 55px;
+  height: 55px;
+}
+.thumb > img {
+  width:100%; height: 100%;
 }
 .chat-content {
   height: 450px;
@@ -50,8 +64,15 @@
                 <ul class="list-group chat-list">
                   <% chatInfo.forEach((e)=>{ %>
                     <li class="list-group-item" data-id="<%= e._id %>" style="cursor:pointer; user-select: none;">
-                      <h6><%= e.member[0]%>님과의 대화</h6>
-
+                      <div class="room">
+                        <h6><%= e.member[0]%>님과의 대화</h6>
+                        <h6 class="text-small"><%= e.bookInfo%></h6>
+                      </div>
+                      <div class="thumb">
+                      <% if(e.fileName.length > 0) { %>
+                        <img src="/images/<%= e.fileName[0] %>" />
+                      <% } %>
+                      </div>
                     </li>
                   <% }) %>
                  </ul>
@@ -108,7 +129,13 @@
 
       $('#send').click(function(){
           var message = $('#chat-input').val();
+          var blank_pattern = /^\s+|\s+$/g;
           
+
+          if(message.replace(blank_pattern, '') == ""){
+            return false;
+          }
+
           var data = {
               parent : currentChat,
               content : message
