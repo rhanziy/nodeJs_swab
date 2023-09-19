@@ -30,11 +30,12 @@
   .card-body {
     position:relative;
   }
+
   .card-body #likeClear {
     position:absolute;
-    top:10px; right:15px;
+    top:18px; right:25px;
     color:#ff4343;
-    font-size:20px;
+    font-size:22px;
     cursor: pointer;
   }
 
@@ -126,8 +127,6 @@
     
     <script>
       
-      console.log('<%- likeItem%>')
-
       $(document).on('click', '#likeClear', function(e){
         let currentId = e.currentTarget.dataset.id;
         let card = $(this).parents('.col');

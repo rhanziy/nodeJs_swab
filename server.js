@@ -37,7 +37,8 @@ app.use(methodOverride('_method'));
 
 // // npm install multer 
 // 이미지 업로드 라이브러리.
-let multer = require('multer');
+const multer = require('multer');
+const fs = require("fs");
 
 
 // npm install socket.io
@@ -49,7 +50,7 @@ const io = new Server(http);
 
 
 var db;
-MongoClient.connect(process.env.DB_URL, function(err, client){
+MongoClient.connect(process.env.DB_URL, { useUnifiedTopology: true },function(err, client){
     if(err) return console.log(err);
 
     db = client.db('swab');
@@ -146,7 +147,7 @@ app.get('/cart', function(req, res){
 
 app.get('/', function(req, res){
     
-    db.collection('bookInfo').find({ status : '1' }, {"fileName.0": 1}).toArray((err, result)=>{
+    db.collection('bookInfo').find({ status : '1' }, {"fileName.0": 1}).sort({"date" : -1}).toArray((err, result)=>{
         res.render('index.ejs', { book : result, user : req.session });
     })
 });
@@ -163,13 +164,12 @@ app.use('/book', require('./routes/book.js'));
 
 app.get('/myPage', isLogin , (req, res)=>{
     db.collection('likeItem').findOne({ user : req.session.passport.user }, (err, result)=> {
-        if(result.itemId.length > 0){
-            db.collection('bookInfo').find({ _id : { $in : result.itemId }}).toArray((err, likeItem)=>{
-                return res.render('myPage/myPage.ejs', { likeItem : likeItem, user : req.session })
-            })
-        } else {
-            res.render('myPage/myPage.ejs', { likeItem : '0', user : req.session })
+        if(result.itemId.length == 0){
+            return res.render('myPage/myPage.ejs', { likeItem : '0', user : req.session })
         }
+        db.collection('bookInfo').find({ _id : { $in : result.itemId }}).toArray((err, likeItem)=>{
+            res.render('myPage/myPage.ejs', { likeItem : likeItem, user : req.session })
+        })
     })
 })
 
@@ -323,7 +323,13 @@ app.put('/editQnA/:id', function(req,res){
 let ff;
 var storage = multer.diskStorage({
     destination : function(req, file, cb){
-        cb(null, './public/images');
+        var dir = "./public/images";
+
+        if(!fs.existsSync(dir)){
+            fs.mkdirSync(dir, { recursive : true });
+        }
+        cb(null, dir);
+
     },
     filename : function(req, file, cb){
         // 한글깨짐현상 방지
@@ -390,32 +396,40 @@ app.put('/editBook/:id', upload.array('file', 3), function(req,res){
 });
 
 app.get('/bookInfo/:id', (req, res)=>{
+
     req.params.id = parseInt(req.params.id)
     
-        db.collection('bookInfo').findOne({ _id : parseInt(req.params.id)}, (err, bookInfo)=>{
+    db.collection('bookInfo').findOne({ _id : parseInt(req.params.id)}, (err, bookInfo)=>{
+        if(!req.session.passport){
+            return res.render('bookInfo.ejs', { book : bookInfo, like : '0', user: req.session});
+        } else {
             db.collection('likeItem').findOne({ user : req.session.passport.user , itemId : { $in : [req.params.id] }}, (err, result1)=>{
                 if(result1){
-                    return res.render('bookInfo.ejs', { book : bookInfo, user : req.session, like : '1'});
+                    return res.render('bookInfo.ejs', { book : bookInfo, like : '1', user: req.session});
+                } else {
+                    res.render('bookInfo.ejs', { book : bookInfo, like : '0', user: req.session});
                 }
-                res.render('bookInfo.ejs', { book : bookInfo, user : req.session, like : '0'});
             })
-        });
+        }
+
+    });
 });
 
 app.post('/like/:bookId', isLogin, function(req, res){
-    req.params.bookId = parseInt(req.params.bookId)
+    let bookId = parseInt(req.params.bookId)
 
     db.collection('likeItem').findOne({ user : req.session.passport.user }, (err, result)=>{
+
         if(result){
             db.collection('likeItem').updateOne(
-                { user : req.session.passport.user }, { $push : { itemId : req.params.bookId }}, 
+                { user : req.session.passport.user }, { $push : { itemId : bookId }}, 
                 (err)=>{
                     if(err) console.log(err);
                     res.send('ok');
             })
         } else {
             db.collection('likeItem').insertOne(
-                { user : req.session.passport.user }, { itemId : [ req.params.bookId ] }, 
+                { user : req.session.passport.user, itemId : [ bookId ] }, 
                 (err)=>{
                     if(err) console.log(err);
                     res.send('ok');
@@ -636,10 +650,15 @@ app.get('/searchBook', function(req, res){
                 }
             }
         },
-        { $sort : { date : 1 }},
+        { $sort : { date : -1 }},
     ]
 
     db.collection('bookInfo').aggregate(keyword).toArray((err, result)=>{
         res.render('searchBook.ejs', { searchBook : result, user : req.session })
     })
 });
+
+app.get('/changeBook/:createUser/:bookId', isLogin, (req, res)=>{
+    req.params.bookId = parseInt(req.params.bookId);
+    res.render('changeBook.ejs', { user : req.session })
+})

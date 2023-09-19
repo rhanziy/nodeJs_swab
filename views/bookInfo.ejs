@@ -51,6 +51,14 @@
 .btnBox > .mine {
     width:48%;
 }
+.btnBox > .mine:first-child {
+    color:rgb(121, 172, 1); 
+    border: 1px solid rgb(121, 172, 1);
+}
+.btnBox > .mine:first-child:hover {
+   background-color: rgb(121, 172, 1);
+   color:#fff
+}
 .swiper-slide {opacity:0.5; transition:opacity 0.5s;}
 .swiper-slide-active {opacity:1;}
 
@@ -132,28 +140,41 @@
 
             <div class="subBox">
                 <h4><%= book.bookTitle %></h4>
-                <p><%= book.author %></p>
-                <p><%= book.cate %></p>
-                <% if(book.createUser == user.passport.user) { %>
+                <p>
+                    <span><%= book.author %> / </span>
+                    <span><%= book.cate == '01'? "국내도서" : "외국도서" %></span>
+                </p>
+                <% if(locals.user.passport) { %>
+                    <% if(book.createUser == user.passport.user) { %>
+                        <div class="btnBox">
+                            <div class="btn btn-outline-warning mine" id="editBtn" style="cursor: pointer;">수정하기</div>
+                            <div class="btn btn-outline-danger mine" id="delBtn" style="cursor: pointer;">삭제하기</div>
+                        </div>
+                    <% } else if(book.status == '1') { %>
+                        <div class="btnBox">
+                            <% if(like == '1'){ %>
+                                <div class="btn like" id="likeClear" style="cursor: pointer;">
+                                    <i class="fa-solid fa-heart"></i>
+                                </div>
+                            <% } else { %>
+                                <div class="btn btn-danger" id="like" style="cursor: pointer;">
+                                    관심 <i class="fa-regular fa-heart"></i>
+                                </div>
+                            <% } %>
+                            <div class="btn btn-success" id="chat" style="cursor: pointer;">스왑톡</div>
+                            <div class="btn btn-dark" id="change" style="cursor: pointer;">교환요청</div>
+                        </div>
+                    <% } %>
+                <% } else  { %>
                     <div class="btnBox">
-                        <div class="btn btn-warning mine" id="editBtn" style="cursor: pointer;">수정하기</div>
-                        <div class="btn btn-danger mine" id="delBtn" style="cursor: pointer;">삭제하기</div>
-                    </div>
-                <% } else if(book.status == '1') { %>
-                    <div class="btnBox">
-                        <% if(like == '1'){ %>
-                            <div class="btn like" id="likeClear" style="cursor: pointer;">
-                                <i class="fa-solid fa-heart"></i>
-                            </div>
-                        <% } else { %>
-                            <div class="btn btn-danger" id="like" style="cursor: pointer;">
-                                관심 <i class="fa-regular fa-heart"></i>
-                            </div>
-                        <% } %>
+                        <div class="btn btn-danger" id="like" style="cursor: pointer;">
+                            관심 <i class="fa-regular fa-heart"></i>
+                        </div>
                         <div class="btn btn-success" id="chat" style="cursor: pointer;">스왑톡</div>
-                        <div class="btn btn-dark" style="cursor: pointer;">교환요청</div>
+                        <div class="btn btn-dark" id="change" style="cursor: pointer;">교환요청</div>
                     </div>
                 <% } %>
+
             </div>
         </div> 
     </main>
@@ -162,15 +183,19 @@
     </div>
 
     <script>
+
+
         if('<%- book.status%>' == '0'){
             $('.swiper-wrapper').prepend(`
                 <div class="swiper-slide">
-                    <img src="/fin.png" style="width:100%; height:auto;">
+                    <img src="/fin.png" style="width:100%; height:100%;">
                 </div>
             `)
         }
 
         $(document).ready(function(){  
+
+
             const swiper = new Swiper('.swiper', {
                 loop: true,
                 pagination: {
@@ -213,6 +238,10 @@
                 }
             })
         });
+
+        $('#change').click(()=>{
+            location.href=`/changeBook/${createUser}/${bookId}`;
+        })
 
         $('#editBtn').click(()=>{
             location.href=`/editBook/${createUser}/${bookId}`;
