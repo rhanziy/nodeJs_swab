@@ -35,18 +35,11 @@ const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
 
 
-// // npm install multer 
-// 이미지 업로드 라이브러리.
-const multer = require('multer');
-const fs = require("fs");
-
-
 // npm install socket.io
 // 양방향 통신
 const http = require('http').createServer(app);
 const {Server} = require('socket.io');
 const io = new Server(http);
-
 
 
 var db;
@@ -132,11 +125,11 @@ function isLogin(req, res, next){
 
 
 app.get('/login', function(req, res){
-    res.render('./member/login.ejs', { user : req.session });
+    res.render('members/login.ejs', { user : req.session });
 });
 
 app.get('/join', function(req, res){
-    res.render('./member/join.ejs', { user : req.session });
+    res.render('members/join.ejs', { user : req.session });
 });
 
 
@@ -146,20 +139,39 @@ app.get('/cart', function(req, res){
 
 
 app.get('/', function(req, res){
-    
     db.collection('bookInfo').find({ status : '1' }, {"fileName.0": 1}).sort({"date" : -1}).toArray((err, result)=>{
         res.render('index.ejs', { book : result, user : req.session });
     })
 });
 
 
-app.get('/write', isLogin, (req, res)=>{
-    res.render('write.ejs', { user : req.session })
+
+app.use('/books', require('./routes/books.js'));
+
+app.get('/books/:id', (req, res)=>{
+
+    req.params.id = parseInt(req.params.id)
+    
+    db.collection('bookInfo').findOne({ _id : parseInt(req.params.id)}, (err, bookInfo)=>{
+        if(!req.session.passport){
+            return res.render('books/books.ejs', { book : bookInfo, like : '0', user: req.session});
+        } else {
+            db.collection('likeItem').findOne({ user : req.session.passport.user , itemId : { $in : [req.params.id] }}, (err, result1)=>{
+                if(result1){
+                    return res.render('books/books.ejs', { book : bookInfo, like : '1', user: req.session});
+                } else {
+                    res.render('books/books.ejs', { book : bookInfo, like : '0', user: req.session});
+                }
+            })
+        }
+
+    });
 });
 
 
-app.use('/book', require('./routes/book.js'));
-
+app.get('/images/:img', function(req, res){
+    res.sendFile(__dirname + '/public/images' + req.params.img)
+})
 
 
 app.get('/myPage', isLogin , (req, res)=>{
@@ -320,167 +332,6 @@ app.put('/editQnA/:id', function(req,res){
 
 
 
-let ff;
-var storage = multer.diskStorage({
-    destination : function(req, file, cb){
-        var dir = "./public/images";
-
-        if(!fs.existsSync(dir)){
-            fs.mkdirSync(dir, { recursive : true });
-        }
-        cb(null, dir);
-
-    },
-    filename : function(req, file, cb){
-        // 한글깨짐현상 방지
-        ff = file
-        ff.originalname = Buffer.from(file.originalname, "latin1").toString("utf8");
-        cb(null,  Date.now() +"_"+ ff.originalname);
-    },
-    // filefilter : function(req, file, cb){
-    //     var ext = path.extname(file.originalname);
-    //     if(ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg'){
-    //         return callback(new Error('PNG, JPG 확장자만 업로드 가능합니다.'));
-    //     }
-    //     callback(null, true)
-    // },
-    limits : {
-        fileSize : 1024 * 1024
-    }
-});
-
-var upload = multer({storage : storage});
-
-
-//램에 저장하는법
-// var storage = multer.memoryStorage();
-// var upload = multer({ storage : storage });
-
-
-app.get('/addBook', isLogin, (req, res)=>{
-    res.render('addBook.ejs', { user : req.session })
-});
-
-app.get('/editBook/:createUser/:bookId', isLogin, (req,res)=>{
-
-    db.collection('bookInfo').findOne({ createUser : req.params.createUser, _id : parseInt(req.params.bookId) }, (err, result)=>{
-        res.render('editBook.ejs', { bookInfo : result, user : req.session })
-    })
-})
-
-app.put('/editBook/:id', upload.array('file', 3), function(req,res){
-    
-    var exFile = req.body.exFile;
-
-    let fileName = [];
-    if(req.files){
-        req.files.map((e)=> {
-            fileName.push(e.filename);
-        })
-    }
-
-    if(exFile){
-        exFile.length < 4 ? fileName.push(...exFile) : fileName.push(exFile)
-    }
-    
-    db.collection('bookInfo').updateOne({_id : parseInt(req.params.id)}, 
-        {$set : { fileName : fileName, bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, status : req.body.status }}, (err)=>{
-        if(err) console.log(err)
-        res.send(
-            `<script>
-                alert('수정이 완료되었습니다.');
-                location.href='/bookInfo/${req.params.id}';
-            </script>`
-        )
-    });
-});
-
-app.get('/bookInfo/:id', (req, res)=>{
-
-    req.params.id = parseInt(req.params.id)
-    
-    db.collection('bookInfo').findOne({ _id : parseInt(req.params.id)}, (err, bookInfo)=>{
-        if(!req.session.passport){
-            return res.render('bookInfo.ejs', { book : bookInfo, like : '0', user: req.session});
-        } else {
-            db.collection('likeItem').findOne({ user : req.session.passport.user , itemId : { $in : [req.params.id] }}, (err, result1)=>{
-                if(result1){
-                    return res.render('bookInfo.ejs', { book : bookInfo, like : '1', user: req.session});
-                } else {
-                    res.render('bookInfo.ejs', { book : bookInfo, like : '0', user: req.session});
-                }
-            })
-        }
-
-    });
-});
-
-app.post('/like/:bookId', isLogin, function(req, res){
-    let bookId = parseInt(req.params.bookId)
-
-    db.collection('likeItem').findOne({ user : req.session.passport.user }, (err, result)=>{
-
-        if(result){
-            db.collection('likeItem').updateOne(
-                { user : req.session.passport.user }, { $push : { itemId : bookId }}, 
-                (err)=>{
-                    if(err) console.log(err);
-                    res.send('ok');
-            })
-        } else {
-            db.collection('likeItem').insertOne(
-                { user : req.session.passport.user, itemId : [ bookId ] }, 
-                (err)=>{
-                    if(err) console.log(err);
-                    res.send('ok');
-            })
-        }
-    })
-})
-
-app.post('/likeClear/:bookId', isLogin, function(req,res){
-
-    db.collection('likeItem').update(
-        { user : req.session.passport.user },
-        { $pull : { itemId : parseInt(req.params.bookId) } },
-        (err, result)=>{
-            res.send('ok')
-    })
-})
-
-// upload.single 파라미터 안에는 input name속성
-// upload.array('input name', 10) 2번째인자는 받을 갯수
-app.post('/upload', isLogin, upload.array('file', 3), (req, res)=>{
-
-    let fileName = [];
-    req.files.map((e)=> {
-        fileName.push(e.filename);
-    })
-
-    db.collection('counter').findOne({name : '등록된 책'}, (err, result)=>{
-        var totalBook = result.totalBook;
-        db.collection('bookInfo').insertOne({_id : totalBook + 1, fileName : fileName ,bookTitle: req.body.title, author: req.body.author, cate : req.body.cate, createUser : req.session.passport.user, status: '1', date : new Date() }, ()=>{
-            db.collection('counter').updateOne({name:'등록된 책'}, {$inc : {totalBook : 1}}, (err)=>{
-                if(err) console.log(err);
-    
-                res.send(
-                    `<script>
-                        alert('등록이 완료되었습니다.');
-                        location.href='/';
-                    </script>`
-                )
-            })
-        })
-    })
-});
-
-
-app.get('/images/:img', function(req, res){
-    res.sendFile(__dirname + '/public/images' + req.params.img)
-})
-
-
-
 
 app.post('/chat', isLogin, function(req, res){
 
@@ -589,16 +440,6 @@ app.delete('/deleteQnA/:id', isLogin,(req, res)=>{
     }); 
 })
 
-app.delete('/deleteBook/:createUser/:bookId', isLogin,(req, res)=>{
-    var deleteData = { _id : parseInt(req.params.id), createUser : req.session.passport.user }
-
-    db.collection('bookInfo').deleteOne( deleteData, function(err, result){
-        res.status(200).send({ message : '삭제했습니다.' });
-    }); 
-})
-
-
-
 
 app.get('/QnA', isLogin ,function(req, res){
     db.collection('qna').find().toArray((err, result)=>{
@@ -637,28 +478,3 @@ app.get('/searchQnA', function(req, res){
     })
 });
 
-
-app.get('/searchBook', function(req, res){
-
-    var keyword = [
-        {
-            $search: {
-                index : 'bookSearch',
-                text : {
-                    query : req.query.value ,
-                    path: ["bookTitle", "author"]
-                }
-            }
-        },
-        { $sort : { date : -1 }},
-    ]
-
-    db.collection('bookInfo').aggregate(keyword).toArray((err, result)=>{
-        res.render('searchBook.ejs', { searchBook : result, user : req.session })
-    })
-});
-
-app.get('/changeBook/:createUser/:bookId', isLogin, (req, res)=>{
-    req.params.bookId = parseInt(req.params.bookId);
-    res.render('changeBook.ejs', { user : req.session })
-})

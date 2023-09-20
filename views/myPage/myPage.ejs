@@ -89,7 +89,7 @@
                               <div id="likeClear" data-id="<%= e._id%>">
                                 <i class="fa-solid fa-heart"></i>
                               </div>
-                              <div class="card-img" onclick="location.href='/bookInfo/<%= e._id%>'">
+                              <div class="card-img" onclick="location.href='/books/<%= e._id%>'">
                                   <% if(e.fileName == '') { %>
                                       <img src="https://www.suwon.go.kr/resources/web/reserv/images/no_img.png"/>
                                   <% } else { %>
@@ -97,7 +97,7 @@
                                   <% } %>
                               </div>
                               <ul class="list-unstyled mt-3 mb-1">
-                                  <li class="bookTitle"><a class="link-secondary text-decoration-none" href="/bookInfo/<%= e._id%>"><%= e.bookTitle%></a></li>
+                                  <li class="bookTitle"><a class="link-secondary text-decoration-none" href="/books/<%= e._id%>"><%= e.bookTitle%></a></li>
                                   <li class="text-muted authorTitle"><%= e.author%></li>
                               </ul>
                           </div>
@@ -114,9 +114,9 @@
       </div>
       <div class="container mb-5">
         <ul class="menuBox">
-          <li onClick="location.href ='myPost'">등록한 책</li>
-          <li onClick="location.href ='myChat'">채팅내역</li>
-          <li onClick="location.href ='myQnA'">문의내역</li>
+          <li onClick="location.href ='myPage/myPost'">등록한 책</li>
+          <li onClick="location.href ='myPage/myChat'">채팅내역</li>
+          <li onClick="location.href ='myPage/myQnA'">문의내역</li>
         </ul>
       </main>
     
@@ -131,7 +131,7 @@
         let currentId = e.currentTarget.dataset.id;
         let card = $(this).parents('.col');
 
-        $.post(('/likeClear/' + currentId), function(result){
+        $.post(('books/likeClear/' + currentId), function(result){
           if(result == 'ok'){
             card.fadeOut();
           }

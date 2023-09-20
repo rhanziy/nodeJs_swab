@@ -115,7 +115,7 @@
 </style>
 <body>
     <div class="container py-2">
-    <%- include('nav.ejs')%>
+    <%- include('../nav.ejs')%>
     <% var fileName = book.fileName %>
 
     <main>
@@ -179,7 +179,7 @@
         </div> 
     </main>
     
-    <%- include('footer.html')%>
+    <%- include('../footer.html')%>
     </div>
 
     <script>
@@ -214,7 +214,7 @@
         var bookTitle = "<%- book.bookTitle%>"
 
         $('#like').click(()=>{
-            $.post(('/like/' + bookId), function(result){
+            $.post(('like/' + bookId), function(result){
                 if(result == 'ok'){
                     $('#like').remove();
                     $('.btnBox').prepend(`
@@ -227,7 +227,7 @@
         });
 
         $('#likeClear').click(()=>{
-            $.post(('/likeClear/' + bookId), function(result){
+            $.post(('likeClear/' + bookId), function(result){
                 if(result == 'ok'){
                     $('#likeClear').remove();
                     $('.btnBox').prepend(`
@@ -240,17 +240,29 @@
         });
 
         $('#change').click(()=>{
-            location.href=`/changeBook/${createUser}/${bookId}`;
+            location.href=`${createUser}/${bookId}/change`;
         })
 
         $('#editBtn').click(()=>{
-            location.href=`/editBook/${createUser}/${bookId}`;
+            location.href=`${bookId}/edit`;
         })
 
         $('#delBtn').click(()=>{
             alert('상품을 지우시겠습니까?');
-            location.href=`/deleteBook/${createUser}/${bookId}`;
-        })
+            
+            $.ajax({
+                url : `/books/${bookId}/delete`,
+                method : 'DELETE',
+                success : function(result){
+
+                    if(result == 'ok'){
+                        alert('삭제되었습니다.');
+                        location.href=`/myPage/myPost`
+                    }
+
+                }
+            });
+        });
 
         $('#chat').click(function(e){
             $.post('/chat', { createUser : createUser, bookId : bookId }, function(result){ 

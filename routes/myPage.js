@@ -12,7 +12,7 @@ router.use( isLogin );
 
 router.get('/myPost', (req, res)=>{
     res.app.db.collection('bookInfo').find({ createUser : req.session.passport.user }).toArray((err, result)=>{
-        res.render('./myPage/myPost.ejs', { bookInfo : result, user : req.session });
+        res.render('myPage/myPost.ejs', { bookInfo : result, user : req.session });
     })
 })
 
@@ -48,14 +48,14 @@ router.get('/myChat', (req,res)=>{
         }
     ]).toArray((err, result)=>{
         console.log(result)
-        res.render('./myPage/myChat.ejs', { chatInfo : result, user : req.session });
+        res.render('myPage/myChat.ejs', { chatInfo : result, user : req.session });
     })
 })
 
 
 router.get('/myQnA', (req, res)=>{
     res.app.db.collection('qna').find({ createUser : req.session.passport.user }).toArray((err, result)=>{
-        res.render('./myPage/myQnA.ejs', { qnas : result, user : req.session });
+        res.render('myPage/myQnA.ejs', { qnas : result, user : req.session });
     })
 })
 

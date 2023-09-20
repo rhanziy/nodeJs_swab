@@ -9,12 +9,12 @@
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 </head>
 <style>
-.chat-content {
+.change-content {
   height: 450px;
   overflow-y: scroll;
   padding: 10px;
 }
-.chat-content li {
+.change-content li {
   margin-top: 10px;
   list-style: none;
 }
@@ -23,27 +23,11 @@
   color: gray;
   margin-bottom: 0;
 }
-.chat-box {
-  background: #eee;
-  padding: 5px;
-  border-radius: 5px;
-  float: left;
-}
-.item-box {
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #c2c2c2;
-  float: left;
-}
-.mine {
-  float: right;
-  background: #daf0bd;
-} 
 
 </style>
 <body>
     <div class="container py-2">
-    <%- include('nav.ejs')%>
+    <%- include('../nav.ejs')%>
     
     <main>
         <div class="container p-4 detail">
@@ -60,14 +44,11 @@
               </div>
                
                <div class="col-9 p-0">
-                <div class="chat-room">
-                    <ul class="list-group chat-content">
-
+                <div>
+                    <ul class="list-group change-content">
+                      
                     </ul>
-                <div class="input-group">
-                    <input class="form-control" id="chat-input">
-                    <button class="btn btn-success" id="send">전송</button>
-                </div>
+         
                 </div>
               </div>
             </div>
@@ -75,7 +56,7 @@
         </div> 
     </main>
     
-    <%- include('footer.html')%>
+    <%- include('../footer.html')%>
     </div>
     <script>
 
@@ -84,12 +65,6 @@
 
 
     });        
-
-
-    $('#send').click(function(){
-
-     
-    });
 
 
   </script>
