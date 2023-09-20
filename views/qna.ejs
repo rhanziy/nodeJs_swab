@@ -35,7 +35,7 @@
           <% }) %> 
       </ul>
       <div class="container my-3" align="right">
-          <button class="btn btn-outline-secondary" onclick="location.href='/write'">문의 작성</button>
+          <button class="btn btn-outline-secondary" onclick="location.href='/qna/new'">문의 작성</button>
       </div>
 
 
@@ -46,14 +46,14 @@
     </div>
 
     <script>
-        console.log("<%- user%>")
+
         $('.delete').click(function(e){
             var id = e.target.dataset.id;
             var current = $(this);
             
             $.ajax({
+                url: `/qna/${id}/delete`,
                 method: 'DELETE',
-                url: '/deleteQnA/' + id,
             }).done(result => {
                 current.parent('li').fadeOut();
             }).fail((xhr, textStatus, errorThrown) => {
@@ -63,12 +63,12 @@
 
         $('.edit').click(function(e){
             var id = e.target.dataset.id;
-            location.href = '/editQnA/' + id;
+            location.href = `/qna/${id}/edit`;
         });
 
         $('#search').click(function(){
             const searchInput = $('#search-input').val();
-            window.location.replace(`/searchQnA?value=${searchInput}`);
+            window.location.replace(`qna/search?value=${searchInput}`);
         });
 
 

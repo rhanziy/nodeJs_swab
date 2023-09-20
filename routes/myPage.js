@@ -60,4 +60,6 @@ router.get('/myQnA', (req, res)=>{
 })
 
 
+
+
 module.exports = router;

@@ -11,7 +11,7 @@
 </head>
 <body>
     <div class="container py-2">
-    <%- include('nav.ejs')%>
+    <%- include('../nav.ejs')%>
 
     
     <main>
@@ -23,28 +23,52 @@
         </div>
   
         <ul class="list-group">
-            <% for(var i = 0; i < searchQnA.length; i++){ %>
+            <% qna.forEach(function(e){ %>
               <li class="list-unstyled list-group-item py-3">
-                  <p class="text-small">no.<%= searchQnA[i]._id %></p>
-                  <h5><strong>제목</strong> <%= searchQnA[i].title %></h5>
-                  <p><strong>내용</strong> <%= searchQnA[i].content %></p>
-                  <button class="btn btn-outline-primary edit" data-id="<%= searchQnA[i]._id %>">수정</button>
-                  <button class="btn btn-outline-danger delete" data-id="<%= searchQnA[i]._id %>">삭제</button>
+                  <p class="text-small">no.<%= e._id %></p>
+                  <h5><strong>제목</strong> <%= e.title %></h5>
+                  <p><strong>내용</strong> <%= e.content %></p>
+                  <% if(user.passport.user == e.createUser) { %>  
+                    <button class="btn btn-outline-primary edit" data-id="<%= e._id %>">수정</button>
+                    <button class="btn btn-outline-danger delete" data-id="<%= e._id %>">삭제</button>
+                <% } %>
               </li>
-            <% } %> 
+            <% }) %> 
         </ul>
+        <div class="container my-3" align="right">
+            <button class="btn btn-outline-secondary" onclick="location.href='/qna/new'">문의 작성</button>
+        </div>
         
     </main>
     
-    <%- include('footer.html')%>
+    <%- include('../footer.html')%>
 
     </div>
 
     <script>
+
+        $('.delete').click(function(e){
+            var id = e.target.dataset.id;
+            var current = $(this);
+            
+            $.ajax({
+                url: `/qna/${id}/delete`,
+                method: 'DELETE',
+            }).done(result => {
+                current.parent('li').fadeOut();
+            }).fail((xhr, textStatus, errorThrown) => {
+                console.log(xhr, textStatus, errorThrown);
+            });
+        })
+
+        $('.edit').click(function(e){
+            var id = e.target.dataset.id;
+            location.href = `/qna/${id}/edit`;
+        });
     
         $('#search').click(function(){
             const searchInput = $('#search-input').val();
-            window.location.replace(`/searchQnA?value=${searchInput}`);
+            window.location.replace(`/qna/search?value=${searchInput}`);
         });
 
         // 자바스크립트로 query string 만들기

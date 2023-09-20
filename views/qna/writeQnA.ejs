@@ -9,12 +9,12 @@
 </head>
 <body>
     <div class="container py-2">
-    <%- include('nav.ejs')%>
+    <%- include('../nav.ejs')%>
     
     <main>
       <h4 class="my-4 "><strong>문의사항</strong></h4>
 
-      <form action="/addQnA" method="POST">
+      <form action="upload" method="POST">
         <div class="mt-2">
           <label>제목</label>
           <input type="text" name="title" class="form-control mt-1">
@@ -28,7 +28,7 @@
 
     </main>
     
-    <%- include('footer.html')%>
+    <%- include('../footer.html')%>
     </div>
 
     

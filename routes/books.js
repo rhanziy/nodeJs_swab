@@ -118,7 +118,7 @@ router.put('/edit/:bookId', upload.array('file', 3), function(req,res){
         res.send(
             `<script>
                 alert('수정이 완료되었습니다.');
-                location.href='/books/${req.params.id}';
+                location.href='/books/${req.params.bookId}';
             </script>`
         )
     });

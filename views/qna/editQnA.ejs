@@ -11,12 +11,12 @@
 </head>
 <body>
     <div class="container py-2">
-    <%- include('nav.ejs')%>
+    <%- include('../nav.ejs')%>
 
     <main>
       <h4 class="my-4 "><strong>문의수정</strong></h4>
       <% if(user == data.createUser){ %>
-        <form action="/editQnA/<%= data._id%>?_method=PUT" method="POST">
+        <form action="/qna/edit/<%= data._id%>?_method=PUT" method="POST">
             <div class="mt-2">
                 <label>제목</label>
                 <!-- <input type="text" value="<%= data._id%>" name="id" style="display: none;" > -->
@@ -33,7 +33,7 @@
       <% } %>
     </main>
     
-    <%- include('footer.html')%>
+    <%- include('../footer.html')%>
 
     </div>
     
