@@ -10,13 +10,16 @@
 </head>
 <style>
 .change-content {
+  display: flex;
+  width:500px;
   height: 450px;
   overflow-y: scroll;
   padding: 10px;
 }
-.change-content li {
-  margin-top: 10px;
+.change-item {
+  margin: 10px;
   list-style: none;
+  cursor: pointer;
 }
 .text-small {
   font-size: 12px;
@@ -31,42 +34,63 @@
     
     <main>
         <div class="container p-4 detail">
-
-            <div class="row">
-              <div class="col-3">
-                <ul class="list-group chat-list">
-                  <li class="list-group-item">
-                    <h6>bookTitle</h6>
-                    <h6 class="text-small">user</h6>
-                  </li>
-                 </ul>
-                 <button type="button" onclick="history.back()" class="btn btn-outline-secondary mt-3">이전</button>
-              </div>
-               
-               <div class="col-9 p-0">
-                <div>
-                    <ul class="list-group change-content">
-                      
-                    </ul>
-         
-                </div>
+          <div class="row">
+            <div class="col-3">
+              <ul class="list-group chat-list">
+                <li class="list-group-item">
+                  <h6><%= info.bookTitle%></h6>
+                  <h6 class="text-small"><%= info.author%></h6>
+                </li>
+              </ul>
+              <button type="button" onclick="history.back()" class="btn btn-outline-secondary mt-3">이전</button>
+            </div>
+              
+            <div class="col-9 p-0">
+              <div class="float-end">
+                  <ul class="list-group change-content mb-3">
+                    <% books.forEach((e)=> { %>
+                    <li class="list-group-item change-item" data-id="<%= e._id%>">
+                      <h6><%= e.bookTitle%></h6>
+                      <h6 class="text-small"><%= e.author%></h6>
+                    </li>
+                    <% }) %>
+                  </ul>
+                  <div class="btn btn-dark float-end" id="change" style="cursor: pointer;">교환요청</div>
               </div>
             </div>
-          
+          </div>
+        
         </div> 
     </main>
     
     <%- include('../footer.html')%>
     </div>
     <script>
+    
+    var item = document.querySelectorAll('.change-item');
+    let bookId;
 
-    $(document).ready(function(){
-      
+    $('.change-item').click(function(e){
+        bookId = e.currentTarget.dataset.id;
 
+        for(let i = 0; i < item.length ; i++){
+          item[i].style.backgroundColor = '#fff';
+        }
 
-    });        
+        e.currentTarget.style.backgroundColor = '#E5E5E5';
+      });
 
+    $('#change').click(function(){
+      $.ajax({
+        url : '/books/change/' + bookId,
+        method : 'PUT',
+        success : function(result){
+          alert('교환이 요청되었습니다.');
+          location.href='/myPage';
+        }
+      })
 
+    });
   </script>
   
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>

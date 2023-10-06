@@ -10,13 +10,13 @@ function isLogin(req, res, next){
 
 router.use( isLogin );
 
-router.get('/myPost', (req, res)=>{
+router.get('/mypost', (req, res)=>{
     res.app.db.collection('bookInfo').find({ createUser : req.session.passport.user }).toArray((err, result)=>{
         res.render('myPage/myPost.ejs', { bookInfo : result, user : req.session });
     })
 })
 
-router.get('/myChat', (req,res)=>{
+router.get('/mychat', (req,res)=>{
     // res.app.db.collection('chatRoom').find({ "member.1" : { $eq : req.session.passport.user }}).toArray((err, result)=>{
     //     res.render('./myPage/myChat.ejs', {  chatInfo : result, user : req.session });    
     // })
@@ -53,7 +53,7 @@ router.get('/myChat', (req,res)=>{
 })
 
 
-router.get('/myQnA', (req, res)=>{
+router.get('/myqna', (req, res)=>{
     res.app.db.collection('qna').find({ createUser : req.session.passport.user }).toArray((err, result)=>{
         res.render('myPage/myQnA.ejs', { qnas : result, user : req.session });
     })

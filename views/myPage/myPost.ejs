@@ -34,10 +34,14 @@
                     <div class="card rounded-3 shadow-sm">
                         <div class="card-body">
                             <div class="card-img">
-                                <% if(e.fileName == '') { %>
-                                    <img src="https://www.suwon.go.kr/resources/web/reserv/images/no_img.png"/>
+                                <% if(e.status != '2'){ %>
+                                    <% if(e.fileName == '') { %>
+                                        <img src="https://www.suwon.go.kr/resources/web/reserv/images/no_img.png"/>
+                                    <% } else { %>
+                                        <img src="/images/<%= e.fileName[0] %>" />
+                                    <% } %>
                                 <% } else { %>
-                                    <img src="/images/<%= e.fileName[0] %>" />
+                                    <img src="/changing.png" style="width:100%; height:100%;"/>
                                 <% } %>
                             </div>
                             <ul class="list-unstyled mt-4">

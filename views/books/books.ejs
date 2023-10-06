@@ -184,11 +184,17 @@
 
     <script>
 
-
+        console.log('<%- book.status%>');
         if('<%- book.status%>' == '0'){
             $('.swiper-wrapper').prepend(`
                 <div class="swiper-slide">
                     <img src="/fin.png" style="width:100%; height:100%;">
+                </div>
+            `)
+        } else if('<%- book.status%>' == '2'){
+            $('.swiper-wrapper').prepend(`
+                <div class="swiper-slide">
+                    <img src="/changing.png" style="width:100%; height:100%;">
                 </div>
             `)
         }
@@ -251,7 +257,7 @@
             alert('상품을 지우시겠습니까?');
             
             $.ajax({
-                url : `/books/${bookId}/delete`,
+                url : `/books/${bookId}`,
                 method : 'DELETE',
                 success : function(result){
 

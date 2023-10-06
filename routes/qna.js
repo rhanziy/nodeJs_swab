@@ -64,7 +64,7 @@ router.put('/edit/:id', function(req,res){
 });
 
 
-router.delete('/:id/delete', isLogin,(req, res)=>{
+router.delete('/:id', isLogin,(req, res)=>{
     
     var deleteData = { _id : parseInt(req.params.id), createUser : req.session.passport.user }
 

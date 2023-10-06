@@ -281,17 +281,17 @@ app.get('/qna', isLogin ,function(req, res){
 
 
 
-app.use('/myPage', require('./routes/myPage.js'));
+app.use('/mypage', require('./routes/myPage.js'));
 
-app.get('/myPage', isLogin , (req, res)=>{
+app.get('/mypage', isLogin , (req, res)=>{
     db.collection('likeItem').findOne({ user : req.session.passport.user }, (err, result)=> {
         if(result.itemId.length == 0){
-            return res.render('myPage/myPage.ejs', { likeItem : '0', user : req.session })
+            return res.render('mypage/myPage.ejs', { likeItem : '0', user : req.session })
         }
         db.collection('bookInfo').find({ _id : { $in : result.itemId }}).toArray((err, likeItem)=>{
-            res.render('myPage/myPage.ejs', { likeItem : likeItem, user : req.session })
-        })
-    })
+            res.render('mypage/myPage.ejs', { likeItem : likeItem, user : req.session })
+        });
+    });
 })
 
 

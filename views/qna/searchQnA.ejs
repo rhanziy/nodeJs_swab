@@ -52,7 +52,7 @@
             var current = $(this);
             
             $.ajax({
-                url: `/qna/${id}/delete`,
+                url: `/qna/${id}`,
                 method: 'DELETE',
             }).done(result => {
                 current.parent('li').fadeOut();

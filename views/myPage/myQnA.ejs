@@ -37,13 +37,14 @@
 
     <script>
 
+        
         $('.delete').click(function(e){
             var id = e.target.dataset.id;
             var current = $(this);
             
             $.ajax({
+                url: `/qna/${id}`,
                 method: 'DELETE',
-                url: '/delete/' + id,
             }).done(result => {
                 current.parent('li').fadeOut();
             }).fail((xhr, textStatus, errorThrown) => {

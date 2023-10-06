@@ -150,11 +150,30 @@ router.get('/search', function(req, res){
 router.get('/:createUser/:bookId/change', isLogin, (req, res)=>{
     req.params.bookId = parseInt(req.params.bookId);
 
-    res.render('books/changeBook.ejs', { user : req.session })
-})
+    res.app.db.collection('bookInfo').findOne({_id : req.params.bookId},{ bookTitle:1, author: 1 }, (err, info)=>{
+        res.app.db.collection('bookInfo').find({ createUser : req.session.passport.user, status : '1' }, {_id:0, cate:0, date:0}).toArray((err, result)=>{
+            res.render('books/changeBook.ejs', { info: info, books : result , user : req.session })
+        });
+    });
+});
 
 
-router.delete('/:bookId/delete', isLogin,(req, res)=>{
+
+
+router.put('/change/:bookId', (req, res)=>{
+    
+    res.app.db.collection('bookInfo').updateOne({_id : parseInt(req.params.bookId)}, {$set : { status: "2" }}, (err)=>{
+        if(err) console.log(err);
+        res.send('ok');
+    })
+});
+
+
+
+
+
+
+router.delete('/:bookId', isLogin,(req, res)=>{
 
     res.app.db.collection('bookInfo').deleteOne({_id : parseInt(req.params.bookId)}, function(err, result){
         if(!result) { 
@@ -167,7 +186,8 @@ router.delete('/:bookId/delete', isLogin,(req, res)=>{
         }
         res.status(200).send('ok');
     }); 
-})
+});
+
 
 router.post('/like/:bookId', isLogin, function(req, res){
     let bookId = parseInt(req.params.bookId)
